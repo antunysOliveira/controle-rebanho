@@ -1,10 +1,8 @@
-import { Suspense } from "react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { StageSwitcher } from "@/components/stage-switcher"
-import { getStage } from "@/lib/stages"
+import { getCurrentStage } from "@/lib/get-stage"
 
 function diasBadge(dias: number) {
   if (dias <= 7) return <Badge variant="destructive">{dias}d</Badge>
@@ -26,36 +24,22 @@ const statusLoteLabel: Record<string, string> = {
   PARTO: "Parto", ENCERRADO: "Encerrado",
 }
 
-export default async function Dashboard({
-  searchParams,
-}: {
-  searchParams: Promise<{ stage?: string }>
-}) {
-  const { stage } = await searchParams
-  const data = getStage(stage)
+export default async function Dashboard() {
+  const { key, data } = await getCurrentStage()
   const d = data.simDate
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground text-sm">
-            📅 {format(d, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded font-mono">simulado</span>
-          </p>
-          <p className="text-xs text-muted-foreground mt-1 max-w-lg">{data.detalhe}</p>
-        </div>
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
+        <p className="text-muted-foreground text-sm">
+          📅 {format(d, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+          <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded font-mono">Estágio {key} · simulado</span>
+        </p>
+        <p className="text-xs text-muted-foreground mt-1 max-w-lg">{data.detalhe}</p>
       </div>
 
-      {/* Stage Switcher */}
-      <Suspense>
-        <StageSwitcher />
-      </Suspense>
-
-      {/* Partos Próximos */}
-      <Card>
+      <Card className="border-l-4 border-l-red-500">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             🐄 Partos Próximos
@@ -85,8 +69,7 @@ export default async function Dashboard({
         </CardContent>
       </Card>
 
-      {/* Desmames Próximos */}
-      <Card>
+      <Card className="border-l-4 border-l-amber-500">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             🐮 Desmames Próximos
@@ -98,29 +81,25 @@ export default async function Dashboard({
             <p className="text-sm text-muted-foreground">Nenhum desmame nos próximos 15 dias.</p>
           ) : (
             <div className="space-y-2">
-              {data.desmaamesProximos.map((b) => {
-                const dias = b.diasRestantes
-                return (
-                  <div key={b.idEtiqueta} className="flex items-center justify-between py-1.5 border-b last:border-0">
-                    <div className="flex items-center gap-3">
-                      {diasBadge(dias)}
-                      <span className="font-mono text-sm font-medium">Bez #{b.idEtiqueta}</span>
-                      <span className="text-xs text-muted-foreground">mãe #{b.idMae}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-sm">{format(b.dataEstimada, "dd/MM", { locale: ptBR })}</span>
-                      <span className="text-xs text-muted-foreground ml-2">{b.pesoAtual} kg</span>
-                    </div>
+              {data.desmaamesProximos.map((b) => (
+                <div key={b.idEtiqueta} className="flex items-center justify-between py-1.5 border-b last:border-0">
+                  <div className="flex items-center gap-3">
+                    {diasBadge(b.diasRestantes)}
+                    <span className="font-mono text-sm font-medium">Bez #{b.idEtiqueta}</span>
+                    <span className="text-xs text-muted-foreground">mãe #{b.idMae}</span>
                   </div>
-                )
-              })}
+                  <div className="text-right">
+                    <span className="text-sm">{format(b.dataEstimada, "dd/MM", { locale: ptBR })}</span>
+                    <span className="text-xs text-muted-foreground ml-2">{b.pesoAtual} kg</span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Protocolo IATF */}
-      <Card>
+      <Card className="border-l-4 border-l-blue-500">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             🔬 Vacas em Protocolo IATF
@@ -154,8 +133,7 @@ export default async function Dashboard({
         </CardContent>
       </Card>
 
-      {/* Diagnósticos Pendentes */}
-      <Card>
+      <Card className="border-l-4 border-l-violet-500">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             ⏳ Diagnósticos de Prenhez Pendentes
@@ -185,8 +163,7 @@ export default async function Dashboard({
         </CardContent>
       </Card>
 
-      {/* Alertas Medicamentos */}
-      <Card>
+      <Card className="border-l-4 border-l-rose-500">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             💊 Alertas de Medicamentos
@@ -205,9 +182,7 @@ export default async function Dashboard({
                 </div>
                 <div className="text-right text-sm">
                   {m.alerta === "estoque" ? (
-                    <span className="text-destructive font-medium">
-                      {Number(m.estoqueAtual)} / {Number(m.estoqueMinimo)} mín
-                    </span>
+                    <span className="text-destructive font-medium">{Number(m.estoqueAtual)} / {Number(m.estoqueMinimo)} mín</span>
                   ) : (
                     <span className="text-yellow-600">{format(m.validade!, "dd/MM/yyyy")}</span>
                   )}
@@ -218,8 +193,7 @@ export default async function Dashboard({
         </CardContent>
       </Card>
 
-      {/* Visão Geral dos Lotes */}
-      <Card>
+      <Card className="border-l-4 border-l-emerald-500">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">📋 Visão Geral dos Lotes</CardTitle>
         </CardHeader>
@@ -243,8 +217,7 @@ export default async function Dashboard({
         </CardContent>
       </Card>
 
-      {/* Bezerros Ativos */}
-      <Card>
+      <Card className="border-l-4 border-l-teal-500">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             🐄 Bezerros em Aleitamento

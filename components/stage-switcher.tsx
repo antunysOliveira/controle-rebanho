@@ -1,41 +1,53 @@
 "use client"
 
-import Link from "next/link"
-import { useSearchParams } from "next/navigation"
+import { useTransition } from "react"
+import { setStage } from "@/app/actions/stage"
 import { cn } from "@/lib/utils"
 
 const STAGES = [
-  { key: "1", label: "Estágio 1", sub: "Fev/2025 · Partos", color: "bg-blue-600" },
-  { key: "2", label: "Estágio 2", sub: "Ago/2025 · Desmames", color: "bg-amber-500" },
-  { key: "3", label: "Estágio 3", sub: "Jan/2026 · Novo ciclo", color: "bg-emerald-600" },
+  { key: "1", label: "Estágio 1", sub: "Fev/2025", color: "bg-blue-600" },
+  { key: "2", label: "Estágio 2", sub: "Ago/2025", color: "bg-amber-500" },
+  { key: "3", label: "Estágio 3", sub: "Jan/2026", color: "bg-emerald-600" },
 ]
 
-export function StageSwitcher() {
-  const params = useSearchParams()
-  const current = params.get("stage") ?? "1"
+export function StageSwitcher({ currentStage }: { currentStage: string }) {
+  const [pending, startTransition] = useTransition()
+
+  function handleSelect(key: string) {
+    startTransition(async () => {
+      await setStage(key)
+    })
+  }
 
   return (
-    <div className="rounded-lg border bg-muted/40 p-1 flex gap-1">
-      {STAGES.map((s) => {
-        const active = current === s.key
-        return (
-          <Link
-            key={s.key}
-            href={`/?stage=${s.key}`}
-            className={cn(
-              "flex-1 rounded-md px-3 py-2 text-center transition-all",
-              active
-                ? `${s.color} text-white shadow-sm`
-                : "hover:bg-muted text-muted-foreground"
-            )}
-          >
-            <div className="text-sm font-semibold leading-none">{s.label}</div>
-            <div className={cn("text-xs mt-0.5", active ? "text-white/80" : "text-muted-foreground")}>
-              {s.sub}
-            </div>
-          </Link>
-        )
-      })}
+    <div className="px-2 pb-3">
+      <p className="text-xs font-semibold px-1 mb-1.5 opacity-50" style={{ color: "var(--sidebar-foreground)" }}>
+        SIMULAÇÃO
+      </p>
+      <div className="flex flex-col gap-1">
+        {STAGES.map((s) => {
+          const active = currentStage === s.key
+          return (
+            <button
+              key={s.key}
+              onClick={() => handleSelect(s.key)}
+              disabled={pending}
+              className={cn(
+                "w-full text-left rounded-md px-3 py-2 transition-all text-sm",
+                active
+                  ? `${s.color} text-white font-semibold shadow-sm`
+                  : "opacity-60 hover:opacity-90"
+              )}
+              style={!active ? { color: "var(--sidebar-foreground)" } : undefined}
+            >
+              <span className="font-medium">{s.label}</span>
+              <span className={cn("ml-1.5 text-xs", active ? "text-white/80" : "opacity-70")}>
+                · {s.sub}
+              </span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

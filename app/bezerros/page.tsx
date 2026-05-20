@@ -1,0 +1,86 @@
+import { bezerros } from "@/lib/mock/data"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
+
+const STATUS_ORDER: Record<string, number> = { MAMANDO: 0, DESMAMADO: 1, VENDIDO: 2, MORTO: 3 }
+
+function statusBadge(status: string) {
+  switch (status) {
+    case "MAMANDO":
+      return <Badge>Mamando</Badge>
+    case "DESMAMADO":
+      return <Badge variant="secondary">Desmamado</Badge>
+    case "VENDIDO":
+      return <Badge variant="outline" className="border-blue-500 text-blue-600">Vendido</Badge>
+    case "MORTO":
+      return <Badge variant="destructive">Morto</Badge>
+    default:
+      return <Badge variant="outline">{status}</Badge>
+  }
+}
+
+export default function BezerrosPage() {
+  const sorted = [...bezerros].sort(
+    (a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99)
+  )
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Bezerros</h1>
+        <p className="text-muted-foreground text-sm">{bezerros.length} bezerros cadastrados</p>
+      </div>
+
+      <Card className="border-l-4 border-l-teal-500">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-semibold">Registro de Bezerros</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Etiqueta</TableHead>
+                <TableHead>Sexo</TableHead>
+                <TableHead>Mãe</TableHead>
+                <TableHead>Nascimento</TableHead>
+                <TableHead className="text-right">Dias de Vida</TableHead>
+                <TableHead className="text-right">Peso Nasc. (kg)</TableHead>
+                <TableHead className="text-right">Peso Atual (kg)</TableHead>
+                <TableHead>Desmame Estimado</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sorted.map((b) => (
+                <TableRow
+                  key={b.id}
+                  className={cn(b.status === "DESMAMADO" && "opacity-60")}
+                >
+                  <TableCell className="font-mono font-medium">{b.idEtiqueta}</TableCell>
+                  <TableCell>{b.sexo === "M" ? "♂ Macho" : "♀ Fêmea"}</TableCell>
+                  <TableCell>
+                    <span className="font-mono text-sm">#{b.maeEtiqueta}</span>
+                  </TableCell>
+                  <TableCell>
+                    {format(b.dataNascimento, "dd/MM/yyyy", { locale: ptBR })}
+                  </TableCell>
+                  <TableCell className="text-right">{b.diasVida}</TableCell>
+                  <TableCell className="text-right">{b.pesoNascimento}</TableCell>
+                  <TableCell className="text-right">{b.pesoAtual}</TableCell>
+                  <TableCell>
+                    {format(b.dataDesmameEstimada, "dd/MM/yyyy", { locale: ptBR })}
+                  </TableCell>
+                  <TableCell>{statusBadge(b.status)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
