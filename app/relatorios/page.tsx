@@ -1,4 +1,5 @@
-import { animais, bezerros, lotes, medicamentos, aplicacoes, eventosReprodutivos } from "@/lib/mock/data"
+import { getCurrentStage } from "@/lib/get-stage"
+import { animais, medicamentos, aplicacoes } from "@/lib/mock/data"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -9,7 +10,6 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table"
-import { cn } from "@/lib/utils"
 
 type TipoMed = "HORMONIO" | "ANTIBIOTICO" | "ANTIPARASITARIO" | "VITAMINA" | "OUTRO"
 
@@ -46,23 +46,9 @@ function taxaBadge(taxa: number) {
   return <Badge variant="outline" className="text-red-700 border-red-400">{taxa.toFixed(1)}%</Badge>
 }
 
-const prenhez = [
-  { lote: "Lote 2025-A", inseminadas: 18, positivas: 14, taxa: 77.8 },
-  { lote: "Lote 2025-B", inseminadas: 12, positivas: 9,  taxa: 75.0 },
-  { lote: "Lote 2024-A", inseminadas: 46, positivas: 41, taxa: 89.1 },
-]
+export default async function RelatoriosPage() {
+  const { data } = await getCurrentStage()
 
-const producaoBezerros = [
-  { periodo: "Jan/2025", nascimentos: 3, machos: 2, femeas: 1,  pesoMedio: "34,3 kg" },
-  { periodo: "Fev/2025", nascimentos: 3, machos: 1, femeas: 2,  pesoMedio: "32,7 kg" },
-  { periodo: "Mar/2025 (est.)", nascimentos: 4, machos: null, femeas: null, pesoMedio: null },
-]
-
-export default function RelatoriosPage() {
-  const bezrAtivos = bezerros.filter((b) => b.status === "MAMANDO").length
-  const protocolos = eventosReprodutivos.filter((e) => e.tipo === "INSEMINACAO_IATF").length
-
-  // Top 5 medicamentos por aplicações
   const consumoMap = new Map<string, { nome: string; tipo: string; count: number; totalDose: number; unidade: string }>()
   for (const ap of aplicacoes) {
     const med = medicamentos.find((m) => m.id === ap.medicamentoId)
@@ -89,7 +75,7 @@ export default function RelatoriosPage() {
     <div className="p-6 space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Relatórios</h1>
-        <p className="text-muted-foreground text-sm mt-1">Visão consolidada do rebanho</p>
+        <p className="text-muted-foreground text-sm mt-1">Visão consolidada · {data.descricao}</p>
       </div>
 
       {/* KPI Row */}
@@ -110,7 +96,7 @@ export default function RelatoriosPage() {
             <div className="flex items-center gap-3">
               <span className="text-3xl">🐮</span>
               <div>
-                <p className="text-3xl font-bold leading-none">{bezrAtivos}</p>
+                <p className="text-3xl font-bold leading-none">{data.bezarrosAtivos.length}</p>
                 <p className="text-xs text-muted-foreground mt-1">Bezerros Ativos</p>
               </div>
             </div>
@@ -121,8 +107,8 @@ export default function RelatoriosPage() {
             <div className="flex items-center gap-3">
               <span className="text-3xl">🔬</span>
               <div>
-                <p className="text-3xl font-bold leading-none">{protocolos}</p>
-                <p className="text-xs text-muted-foreground mt-1">Protocolos Registrados</p>
+                <p className="text-3xl font-bold leading-none">{data.vacasEmProtocolo.length}</p>
+                <p className="text-xs text-muted-foreground mt-1">Protocolos Ativos</p>
               </div>
             </div>
           </CardContent>
@@ -132,7 +118,7 @@ export default function RelatoriosPage() {
             <div className="flex items-center gap-3">
               <span className="text-3xl">💊</span>
               <div>
-                <p className="text-3xl font-bold leading-none">{aplicacoes.length}</p>
+                <p className="text-3xl font-bold leading-none">{data.aplicacoesCount}</p>
                 <p className="text-xs text-muted-foreground mt-1">Aplicações de Medicamentos</p>
               </div>
             </div>
@@ -156,7 +142,7 @@ export default function RelatoriosPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {prenhez.map((row) => (
+              {data.taxaPrenhez.map((row) => (
                 <TableRow key={row.lote}>
                   <TableCell className="font-medium">{row.lote}</TableCell>
                   <TableCell className="text-right">{row.inseminadas}</TableCell>
@@ -186,7 +172,7 @@ export default function RelatoriosPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {producaoBezerros.map((row) => (
+              {data.producaoBezerrosMes.map((row) => (
                 <TableRow key={row.periodo}>
                   <TableCell className="font-medium">{row.periodo}</TableCell>
                   <TableCell className="text-right">{row.nascimentos}</TableCell>
@@ -245,8 +231,8 @@ export default function RelatoriosPage() {
           <CardTitle className="text-base font-semibold">Status do Rebanho por Lote</CardTitle>
         </CardHeader>
         <CardContent className="pt-2 space-y-4">
-          {lotes.map((lote) => (
-            <div key={lote.id} className="rounded-lg border p-4 space-y-3">
+          {data.visaoGeralLotes.map((lote) => (
+            <div key={lote.nome} className="rounded-lg border p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-sm">{lote.nome}</span>
                 {loteStatusBadge(lote.status)}

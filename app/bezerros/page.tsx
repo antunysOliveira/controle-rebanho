@@ -1,9 +1,9 @@
-import { bezerros } from "@/lib/mock/data"
+import { getCurrentStage } from "@/lib/get-stage"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
-import { format } from "date-fns"
+import { format, subDays, addDays } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 const STATUS_ORDER: Record<string, number> = { MAMANDO: 0, DESMAMADO: 1, VENDIDO: 2, MORTO: 3 }
@@ -23,8 +23,11 @@ function statusBadge(status: string) {
   }
 }
 
-export default function BezerrosPage() {
-  const sorted = [...bezerros].sort(
+export default async function BezerrosPage() {
+  const { data } = await getCurrentStage()
+  const simDate = data.simDate
+
+  const sorted = [...data.bezarrosAtivos].sort(
     (a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99)
   )
 
@@ -32,7 +35,7 @@ export default function BezerrosPage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Bezerros</h1>
-        <p className="text-muted-foreground text-sm">{bezerros.length} bezerros cadastrados</p>
+        <p className="text-muted-foreground text-sm">{data.bezarrosAtivos.length} bezerros ativos · {data.descricao}</p>
       </div>
 
       <Card className="border-l-4 border-l-teal-500">
@@ -55,28 +58,32 @@ export default function BezerrosPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sorted.map((b) => (
-                <TableRow
-                  key={b.id}
-                  className={cn(b.status === "DESMAMADO" && "opacity-60")}
-                >
-                  <TableCell className="font-mono font-medium">{b.idEtiqueta}</TableCell>
-                  <TableCell>{b.sexo === "M" ? "♂ Macho" : "♀ Fêmea"}</TableCell>
-                  <TableCell>
-                    <span className="font-mono text-sm">#{b.maeEtiqueta}</span>
-                  </TableCell>
-                  <TableCell>
-                    {format(b.dataNascimento, "dd/MM/yyyy", { locale: ptBR })}
-                  </TableCell>
-                  <TableCell className="text-right">{b.diasVida}</TableCell>
-                  <TableCell className="text-right">{b.pesoNascimento}</TableCell>
-                  <TableCell className="text-right">{b.pesoAtual}</TableCell>
-                  <TableCell>
-                    {format(b.dataDesmameEstimada, "dd/MM/yyyy", { locale: ptBR })}
-                  </TableCell>
-                  <TableCell>{statusBadge(b.status)}</TableCell>
-                </TableRow>
-              ))}
+              {sorted.map((b) => {
+                const dataNascimento = subDays(simDate, b.diasVida)
+                const dataDesmame = addDays(dataNascimento, 210)
+                return (
+                  <TableRow
+                    key={b.idEtiqueta}
+                    className={cn(b.status === "DESMAMADO" && "opacity-60")}
+                  >
+                    <TableCell className="font-mono font-medium">{b.idEtiqueta}</TableCell>
+                    <TableCell>{b.sexo === "M" ? "♂ Macho" : "♀ Fêmea"}</TableCell>
+                    <TableCell>
+                      <span className="font-mono text-sm">#{b.idMae}</span>
+                    </TableCell>
+                    <TableCell>
+                      {format(dataNascimento, "dd/MM/yyyy", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell className="text-right">{b.diasVida}</TableCell>
+                    <TableCell className="text-right">{b.pesoNascimento}</TableCell>
+                    <TableCell className="text-right">{b.pesoAtual}</TableCell>
+                    <TableCell>
+                      {format(dataDesmame, "dd/MM/yyyy", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell>{statusBadge(b.status)}</TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </CardContent>

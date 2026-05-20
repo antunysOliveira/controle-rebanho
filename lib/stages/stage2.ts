@@ -29,10 +29,8 @@ export const stage2: StageData = {
   descricao: "Pré-desmame — Ago/2025",
   detalhe: "Bezerros de Jan-Fev/2025 prestes a serem desmamados. Vacas do Lote 2025-A em novo protocolo IATF.",
 
-  // Partos desse ciclo ainda não chegaram (previsão jan-fev/26)
   partosProximos: [],
 
-  // Os mesmos bezerros do Stage 1 — agora com ~190-207 dias
   desmaamesProximos: [
     { idEtiqueta: "B-201", idMae: "0014", dataNascimento: nasc.B201, dataEstimada: addDays(nasc.B201, 210), diasRestantes: diasRest(nasc.B201), pesoAtual: 168 },
     { idEtiqueta: "B-202", idMae: "0022", dataNascimento: nasc.B202, dataEstimada: addDays(nasc.B202, 210), diasRestantes: diasRest(nasc.B202), pesoAtual: 172 },
@@ -41,22 +39,24 @@ export const stage2: StageData = {
     { idEtiqueta: "B-205", idMae: "0063", dataNascimento: nasc.B205, dataEstimada: addDays(nasc.B205, 210), diasRestantes: diasRest(nasc.B205), pesoAtual: 188 },
   ],
 
-  // Lote 2025-A: 30 dias pós último parto (abril) → protocolo começa
   vacasEmProtocolo: [
     {
-      idEtiqueta: "0042", nome: "Mimosa", lote: "Lote 2025-A",
+      idEtiqueta: "0042", nome: "Mimosa",   lote: "Lote 2025-A",
       etapaAtual: "aguardando_diagnostico",
       dataImplante: subDays(d, 32), dataInseminacao: subDays(d, 30), dataDiagnostico: subDays(d, 2),
+      veterinario: "Dr. Carlos Mendes",
     },
     {
-      idEtiqueta: "0018", nome: null,     lote: "Lote 2025-A",
+      idEtiqueta: "0018", nome: null,        lote: "Lote 2025-A",
       etapaAtual: "inseminacao_iatf",
       dataImplante: subDays(d, 2), dataInseminacao: d, dataDiagnostico: addDays(d, 30),
+      veterinario: "Dr. Carlos Mendes",
     },
     {
       idEtiqueta: "0077", nome: "Pretinha", lote: "Lote 2025-A",
       etapaAtual: "implante_hormonal",
       dataImplante: d, dataInseminacao: addDays(d, 2), dataDiagnostico: addDays(d, 32),
+      veterinario: "Dr. Carlos Mendes",
     },
   ],
 
@@ -80,10 +80,30 @@ export const stage2: StageData = {
   ],
 
   bezarrosAtivos: [
-    { idEtiqueta: "B-201", idMae: "0014", diasVida: 198, pesoAtual: 168, sexo: "M", status: "MAMANDO" },
-    { idEtiqueta: "B-202", idMae: "0022", diasVida: 204, pesoAtual: 172, sexo: "F", status: "MAMANDO" },
-    { idEtiqueta: "B-203", idMae: "0036", diasVida: 185, pesoAtual: 181, sexo: "M", status: "MAMANDO" },
-    { idEtiqueta: "B-204", idMae: "0051", diasVida: 212, pesoAtual: 185, sexo: "F", status: "MAMANDO" },
-    { idEtiqueta: "B-205", idMae: "0063", diasVida: 216, pesoAtual: 188, sexo: "M", status: "MAMANDO" },
+    { idEtiqueta: "B-201", idMae: "0014", diasVida: 198, pesoNascimento: 34, pesoAtual: 168, sexo: "M", status: "MAMANDO" },
+    { idEtiqueta: "B-202", idMae: "0022", diasVida: 204, pesoNascimento: 32, pesoAtual: 172, sexo: "F", status: "MAMANDO" },
+    { idEtiqueta: "B-203", idMae: "0036", diasVida: 185, pesoNascimento: 36, pesoAtual: 181, sexo: "M", status: "MAMANDO" },
+    { idEtiqueta: "B-204", idMae: "0051", diasVida: 212, pesoNascimento: 33, pesoAtual: 185, sexo: "F", status: "MAMANDO" },
+    { idEtiqueta: "B-205", idMae: "0063", diasVida: 216, pesoNascimento: 35, pesoAtual: 188, sexo: "M", status: "MAMANDO" },
+  ],
+
+  taxaPrenhez: [
+    { lote: "Lote 2025-A", inseminadas: 22, positivas: 4,  taxa: 18.2  },
+    { lote: "Lote 2025-B", inseminadas: 40, positivas: 40, taxa: 100.0 },
+    { lote: "Lote 2024-A", inseminadas: 46, positivas: 41, taxa: 89.1  },
+  ],
+
+  producaoBezerrosMes: [
+    { periodo: "Jan/2025",        nascimentos: 3, machos: 2,    femeas: 1,    pesoMedio: "34,3 kg" },
+    { periodo: "Fev/2025",        nascimentos: 3, machos: 1,    femeas: 2,    pesoMedio: "32,7 kg" },
+    { periodo: "Mar/2025",        nascimentos: 4, machos: 2,    femeas: 2,    pesoMedio: "33,1 kg" },
+    { periodo: "Jan/2026 (est.)", nascimentos: 5, machos: null, femeas: null, pesoMedio: null      },
+  ],
+
+  aplicacoesCount: 28,
+
+  repasseTouros: [
+    { nome: "Imperador 450", lote: "Lote 2025-A", dataInicio: new Date(2025, 7, 1),  dataFim: new Date(2026, 0, 31), ativo: true  },
+    { nome: "Brutus 520",    lote: "Lote 2025-B", dataInicio: new Date(2025, 0, 15), dataFim: new Date(2025, 5, 30), ativo: false },
   ],
 }

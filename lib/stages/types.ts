@@ -26,6 +26,7 @@ export interface VacaProtocolo {
   dataImplante: Date
   dataInseminacao: Date
   dataDiagnostico: Date
+  veterinario?: string
 }
 
 export interface DiagnosticoPendente {
@@ -59,9 +60,33 @@ export interface BezerroAtivo {
   idEtiqueta: string
   idMae: string
   diasVida: number
+  pesoNascimento: number
   pesoAtual: number
   sexo: "M" | "F"
   status: string
+}
+
+export interface TaxaPrenhez {
+  lote: string
+  inseminadas: number
+  positivas: number
+  taxa: number
+}
+
+export interface ProducaoBezMes {
+  periodo: string
+  nascimentos: number
+  machos: number | null
+  femeas: number | null
+  pesoMedio: string | null
+}
+
+export interface RepasseTouro {
+  nome: string
+  lote: string
+  dataInicio: Date
+  dataFim: Date
+  ativo: boolean
 }
 
 export interface StageData {
@@ -76,4 +101,8 @@ export interface StageData {
   alertasMedicamentos: AlertaMedicamento[]
   visaoGeralLotes: VisaoLote[]
   bezarrosAtivos: BezerroAtivo[]
+  taxaPrenhez: TaxaPrenhez[]
+  producaoBezerrosMes: ProducaoBezMes[]
+  aplicacoesCount: number
+  repasseTouros: RepasseTouro[]
 }
