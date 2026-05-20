@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Fazenda {
+  id       String   @id @default(uuid())
+  nome     String
+  lotes    Lote[]
+  criadoEm DateTime @default(now())
+}
+
+model Lote {
+  id             String        @id @default(uuid())
+  nome           String
+  tipo           TipoLote
+  dataAbertura   DateTime
+  dataFechamento DateTime?
+  status         StatusLote
+  fazendaId      String?
+  fazenda        Fazenda?      @relation(fields: [fazendaId], references: [id])
+  touroId        String?
+  touro          Animal?       @relation("TouroLote", fields: [touroId], references: [id])
+  vacas          Animal[]      @relation("VacaLote")
+  encarregados   Encarregado[] @relation("EncarregadoLote")
+  criadoEm       DateTime      @default(now())
+}
+
+enum TipoLote {
+  VACA_CRIA
+  RECRIA
+  ENGORDA
+}
+
+enum StatusLote {
+  ABERTO
+  EM_MONTA
+  GESTACAO
+  PARTO
+  ENCERRADO
+}
+
+model Animal {
+  id                       String                 @id @default(uuid())
+  idEtiqueta               String                 @unique
+  nome                     String?
+  tipo                     TipoAnimal             @default(VACA)
+  sexo                     Sexo?
+  loteId                   String?
+  lote                     Lote?                  @relation("VacaLote", fields: [loteId], references: [id])
+  lotesTouro               Lote[]                 @relation("TouroLote")
+  dataNascimento           DateTime?
+  statusAtual              StatusVaca?
+  dataUltimoParto          DateTime?
+  dataProximoPartoEstimado DateTime?
+  emLactacao               Boolean                @default(false)
+  observacoes              String?
+  eventos                  EventoReprodutivo[]
+  bezerros                 Bezerro[]
+  aplicacoes               AplicacaoMedicamento[]
+  ativo                    Boolean                @default(true)
+  criadoEm                 DateTime               @default(now())
+}
+
+enum TipoAnimal {
+  VACA
+  TOURO
+}
+
+enum StatusVaca {
+  GESTANTE
+  LACTANDO
+  VAZIA
+  EM_PROTOCOLO
+  INSEMINADA
+  DESCARTE
+}
+
+enum Sexo {
+  MACHO
+  FEMEA
+}
+
+model Bezerro {
+  id                  String        @id @default(uuid())
+  idEtiqueta          String        @unique
+  maeId               String
+  mae                 Animal        @relation(fields: [maeId], references: [id])
+  sexo                Sexo
+  dataNascimento      DateTime
+  dataDesmameEstimada DateTime
+  dataDesmameReal     DateTime?
+  pesoNascimento      Decimal?      @db.Decimal(10, 2)
+  pesoDesmame         Decimal?      @db.Decimal(10, 2)
+  status              StatusBezerro @default(MAMANDO)
+  criadoEm            DateTime      @default(now())
+}
+
+enum StatusBezerro {
+  MAMANDO
+  DESMAMADO
+  VENDIDO
+  MORTO
+}
+
+model EventoReprodutivo {
+  id            String       @id @default(uuid())
+  animalId      String
+  animal        Animal       @relation(fields: [animalId], references: [id])
+  tipoEvento    TipoEvento
+  data          DateTime
+  veterinarioId String?
+  veterinario   Veterinario? @relation(fields: [veterinarioId], references: [id])
+  observacoes   String?
+  resultado     String?
+  criadoEm      DateTime     @default(now())
+}
+
+enum TipoEvento {
+  IMPLANTE_HORMONAL
+  INSEMINACAO_IATF
+  ENTRADA_TOURO
+  DIAGNOSTICO_PRENHEZ
+  PARTO
+  DESMAME
+  SECAGEM
+  DESCARTE
+}
+
+model Medicamento {
+  id             String                 @id @default(uuid())
+  nome           String
+  principioAtivo String?
+  tipo           TipoMedicamento
+  dosePadrao     Decimal?               @db.Decimal(10, 2)
+  unidade        String
+  estoqueAtual   Decimal                @db.Decimal(10, 2)
+  estoqueMinimo  Decimal                @db.Decimal(10, 2)
+  validade       DateTime?
+  fornecedor     String?
+  aplicacoes     AplicacaoMedicamento[]
+  ativo          Boolean                @default(true)
+  criadoEm       DateTime               @default(now())
+}
+
+enum TipoMedicamento {
+  HORMONIO
+  ANTIBIOTICO
+  ANTIPARASITARIO
+  VITAMINA
+  OUTRO
+}
+
+model AplicacaoMedicamento {
+  id              String       @id @default(uuid())
+  animalId        String
+  animal          Animal       @relation(fields: [animalId], references: [id])
+  medicamentoId   String
+  medicamento     Medicamento  @relation(fields: [medicamentoId], references: [id])
+  doseAplicada    Decimal      @db.Decimal(10, 2)
+  via             ViaAplicacao
+  data            DateTime
+  responsavelId   String?
+  motivo          String?
+  carenciaDias    Int?
+  dataFimCarencia DateTime?
+  criadoEm        DateTime     @default(now())
+}
+
+enum ViaAplicacao {
+  INTRAMUSCULAR
+  SUBCUTANEA
+  ORAL
+  TOPICA
+}
+
+model Veterinario {
+  id            String              @id @default(uuid())
+  nome          String
+  crmv          String              @unique
+  telefone      String?
+  email         String?
+  especialidade String?
+  ativo         Boolean             @default(true)
+  eventos       EventoReprodutivo[]
+  criadoEm      DateTime            @default(now())
+}
+
+model Encarregado {
+  id       String           @id @default(uuid())
+  nome     String
+  cargo    CargoFuncionario
+  telefone String?
+  lotes    Lote[]           @relation("EncarregadoLote")
+  ativo    Boolean          @default(true)
+  criadoEm DateTime         @default(now())
+}
+
+enum CargoFuncionario {
+  VAQUEIRO
+  ENCARREGADO
+  GERENTE
+}
