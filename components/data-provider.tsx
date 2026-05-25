@@ -1,0 +1,96 @@
+"use client"
+
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
+import { aplicacoes as mockAplicacoes } from "@/lib/mock/data"
+import {
+  type AplicacaoItem,
+  getAddedAplicacoes,
+  persistAddAplicacao,
+  getRemovedAplicacaoIds,
+  persistRemoveAplicacao,
+  getAnimalLoteOverrides,
+  persistAnimalLote,
+} from "@/lib/local-data"
+
+type AnimalLote = { loteId: string; lote: string }
+
+interface DataContextValue {
+  getAplicacoesByAnimal(animalId: string): AplicacaoItem[]
+  addAplicacao(item: Omit<AplicacaoItem, "id">): void
+  removeAplicacao(id: string): void
+  getAnimalLote(animalId: string): AnimalLote | null
+  moveAnimalToLote(animalId: string, loteId: string, lote: string): void
+}
+
+const DataContext = createContext<DataContextValue | null>(null)
+
+export function DataProvider({ children }: { children: ReactNode }) {
+  const [added, setAdded] = useState<AplicacaoItem[]>([])
+  const [removed, setRemoved] = useState<string[]>([])
+  const [loteOverrides, setLoteOverrides] = useState<Record<string, AnimalLote>>({})
+
+  useEffect(() => {
+    setAdded(getAddedAplicacoes())
+    setRemoved(getRemovedAplicacaoIds())
+    setLoteOverrides(getAnimalLoteOverrides())
+  }, [])
+
+  const getAplicacoesByAnimal = useCallback(
+    (animalId: string): AplicacaoItem[] => {
+      const mock = mockAplicacoes
+        .filter((a) => a.animalId === animalId && !removed.includes(a.id))
+        .map((a) => ({
+          id: a.id,
+          animalId: a.animalId,
+          etiqueta: a.etiqueta,
+          medicamentoId: a.medicamentoId,
+          medicamento: a.medicamento,
+          doseAplicada: a.doseAplicada,
+          via: a.via as AplicacaoItem["via"],
+          data: a.data.toISOString(),
+          responsavel: a.responsavel,
+          motivo: a.motivo,
+          carenciaDias: a.carenciaDias,
+          proximaDose: undefined,
+        }))
+      const userAdded = added.filter((a) => a.animalId === animalId)
+      return [...mock, ...userAdded].sort(
+        (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
+      )
+    },
+    [added, removed]
+  )
+
+  const addAplicacao = useCallback((item: Omit<AplicacaoItem, "id">) => {
+    const full: AplicacaoItem = { ...item, id: `u-${Date.now()}` }
+    persistAddAplicacao(full)
+    setAdded((prev) => [...prev, full])
+  }, [])
+
+  const removeAplicacao = useCallback((id: string) => {
+    persistRemoveAplicacao(id)
+    setRemoved((prev) => [...prev, id])
+  }, [])
+
+  const getAnimalLote = useCallback(
+    (animalId: string): AnimalLote | null => loteOverrides[animalId] ?? null,
+    [loteOverrides]
+  )
+
+  const moveAnimalToLote = useCallback((animalId: string, loteId: string, lote: string) => {
+    persistAnimalLote(animalId, loteId, lote)
+    setLoteOverrides((prev) => ({ ...prev, [animalId]: { loteId, lote } }))
+  }, [])
+
+  return (
+    <DataContext.Provider value={{ getAplicacoesByAnimal, addAplicacao, removeAplicacao, getAnimalLote, moveAnimalToLote }}>
+      {children}
+    </DataContext.Provider>
+  )
+}
+
+export function useData(): DataContextValue {
+  const ctx = useContext(DataContext)
+  if (!ctx) throw new Error("useData must be used within DataProvider")
+  return ctx
+}

@@ -1,7 +1,10 @@
+"use client"
+
 import Link from "next/link"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { animais } from "@/lib/mock/data"
+import { useData } from "@/components/data-provider"
 import { Badge } from "@/components/ui/badge"
 import {
   Table,
@@ -70,6 +73,8 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function AnimaisPage() {
+  const { getAnimalLote } = useData()
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -101,7 +106,9 @@ export default function AnimaisPage() {
                   <span className="font-mono font-medium">{animal.idEtiqueta}</span>
                 </TableCell>
                 <TableCell>{animal.nome ?? "—"}</TableCell>
-                <TableCell>{animal.lote}</TableCell>
+                <TableCell>
+                  {getAnimalLote(animal.id)?.lote ?? animal.lote}
+                </TableCell>
                 <TableCell>
                   <StatusBadge status={animal.status} />
                 </TableCell>

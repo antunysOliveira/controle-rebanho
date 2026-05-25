@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/sidebar"
 import { MobileHeader } from "@/components/mobile-header"
 import { PWARegister } from "@/components/pwa-register"
 import { StageProvider } from "@/components/stage-provider"
+import { DataProvider } from "@/components/data-provider"
 
 export const metadata: Metadata = {
   title: "Controle de Rebanho",
@@ -24,10 +25,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" className={`${GeistSans.variable} h-full antialiased`}>
       <body className="h-full flex flex-col md:flex-row bg-background">
         <StageProvider>
-          <MobileHeader />
-          <Sidebar />
-          <main className="flex-1 overflow-auto">{children}</main>
-          <PWARegister />
+          <DataProvider>
+            <MobileHeader />
+            <Sidebar />
+            <main className="flex-1 overflow-auto">{children}</main>
+            <PWARegister />
+          </DataProvider>
         </StageProvider>
       </body>
     </html>

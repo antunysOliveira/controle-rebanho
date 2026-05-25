@@ -18,11 +18,12 @@ interface AplicacaoMock {
   data: Date
   motivo?: string | null
   carenciaDias: number
+  proximaDose?: Date | null
 }
 
 type TimelineItem =
   | { kind: "evento"; id: string; data: Date; tipo: string; resultado?: string | null; obs?: string | null }
-  | { kind: "aplicacao"; id: string; data: Date; medicamento: string; doseAplicada: number; via: string; motivo?: string | null; carenciaDias: number }
+  | { kind: "aplicacao"; id: string; data: Date; medicamento: string; doseAplicada: number; via: string; motivo?: string | null; carenciaDias: number; proximaDose?: Date | null }
 
 const eventoLabel: Record<string, string> = {
   IMPLANTE_HORMONAL:   "Implante Hormonal",
@@ -64,7 +65,7 @@ interface AnimalTimelineProps {
 export function AnimalTimeline({ eventos, aplicacoes }: AnimalTimelineProps) {
   const items: TimelineItem[] = [
     ...eventos.map(e => ({ kind: "evento" as const, id: e.id, data: e.data, tipo: e.tipo, resultado: e.resultado, obs: e.obs })),
-    ...aplicacoes.map(a => ({ kind: "aplicacao" as const, id: a.id, data: a.data, medicamento: a.medicamento, doseAplicada: a.doseAplicada, via: a.via, motivo: a.motivo, carenciaDias: a.carenciaDias })),
+    ...aplicacoes.map(a => ({ kind: "aplicacao" as const, id: a.id, data: a.data, medicamento: a.medicamento, doseAplicada: a.doseAplicada, via: a.via, motivo: a.motivo, carenciaDias: a.carenciaDias, proximaDose: a.proximaDose })),
   ].sort((a, b) => b.data.getTime() - a.data.getTime())
 
   if (items.length === 0) {
@@ -73,13 +74,11 @@ export function AnimalTimeline({ eventos, aplicacoes }: AnimalTimelineProps) {
 
   return (
     <div className="relative pl-6">
-      {/* vertical line */}
       <div className="absolute left-2.5 top-0 bottom-0 w-px bg-border" />
 
       <div className="space-y-5">
         {items.map((item) => (
           <div key={`${item.kind}-${item.id}`} className="relative">
-            {/* dot */}
             <div className={`absolute -left-[15px] top-1 w-3 h-3 rounded-full border-2 border-background ${dotColor(item)}`} />
 
             <div className="space-y-0.5">
@@ -89,11 +88,7 @@ export function AnimalTimeline({ eventos, aplicacoes }: AnimalTimelineProps) {
                 </span>
                 {item.kind === "evento" && item.resultado && (
                   <Badge
-                    className={`text-xs ${
-                      item.resultado === "POSITIVO"
-                        ? "bg-green-100 text-green-700 border-green-200"
-                        : "bg-red-100 text-red-700 border-red-200"
-                    }`}
+                    className={`text-xs ${item.resultado === "POSITIVO" ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200"}`}
                     variant="outline"
                   >
                     {item.resultado === "POSITIVO" ? "Positivo" : "Negativo"}
@@ -115,6 +110,11 @@ export function AnimalTimeline({ eventos, aplicacoes }: AnimalTimelineProps) {
                   </p>
                   {item.carenciaDias > 0 && (
                     <p className="text-xs text-amber-600">Carência: {item.carenciaDias} dias</p>
+                  )}
+                  {item.proximaDose && (
+                    <p className="text-xs text-rose-600 font-medium">
+                      Próxima dose: {format(item.proximaDose, "dd/MM/yyyy", { locale: ptBR })}
+                    </p>
                   )}
                 </div>
               )}
