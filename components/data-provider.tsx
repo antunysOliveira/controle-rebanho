@@ -2,14 +2,20 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
 import { aplicacoes as mockAplicacoes } from "@/lib/mock/data"
+import { transacoes as mockTransacoes } from "@/lib/mock/financeiro"
 import {
   type AplicacaoItem,
+  type TransacaoItem,
   getAddedAplicacoes,
   persistAddAplicacao,
   getRemovedAplicacaoIds,
   persistRemoveAplicacao,
   getAnimalLoteOverrides,
   persistAnimalLote,
+  getAddedTransacoes,
+  persistAddTransacao,
+  getRemovedTransacaoIds,
+  persistRemoveTransacao,
 } from "@/lib/local-data"
 
 type AnimalLote = { loteId: string; lote: string }
@@ -20,6 +26,9 @@ interface DataContextValue {
   removeAplicacao(id: string): void
   getAnimalLote(animalId: string): AnimalLote | null
   moveAnimalToLote(animalId: string, loteId: string, lote: string): void
+  getTodasTransacoes(): TransacaoItem[]
+  addTransacao(item: Omit<TransacaoItem, "id">): void
+  removeTransacao(id: string): void
 }
 
 const DataContext = createContext<DataContextValue | null>(null)
@@ -28,11 +37,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [added, setAdded] = useState<AplicacaoItem[]>([])
   const [removed, setRemoved] = useState<string[]>([])
   const [loteOverrides, setLoteOverrides] = useState<Record<string, AnimalLote>>({})
+  const [transacoesAdded, setTransacoesAdded] = useState<TransacaoItem[]>([])
+  const [transacoesRemoved, setTransacoesRemoved] = useState<string[]>([])
 
   useEffect(() => {
     setAdded(getAddedAplicacoes())
     setRemoved(getRemovedAplicacaoIds())
     setLoteOverrides(getAnimalLoteOverrides())
+    setTransacoesAdded(getAddedTransacoes())
+    setTransacoesRemoved(getRemovedTransacaoIds())
   }, [])
 
   const getAplicacoesByAnimal = useCallback(
@@ -82,8 +95,40 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setLoteOverrides((prev) => ({ ...prev, [animalId]: { loteId, lote } }))
   }, [])
 
+  const getTodasTransacoes = useCallback((): TransacaoItem[] => {
+    const mock: TransacaoItem[] = mockTransacoes
+      .filter((t) => !transacoesRemoved.includes(t.id))
+      .map((t) => ({
+        id: t.id,
+        tipo: t.tipo,
+        categoria: t.categoria,
+        valor: t.valor,
+        data: t.data.toISOString(),
+        descricao: t.descricao,
+        animalId: t.animalId,
+      }))
+    return [...mock, ...transacoesAdded].sort(
+      (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
+    )
+  }, [transacoesAdded, transacoesRemoved])
+
+  const addTransacao = useCallback((item: Omit<TransacaoItem, "id">) => {
+    const full: TransacaoItem = { ...item, id: `f-${Date.now()}` }
+    persistAddTransacao(full)
+    setTransacoesAdded((prev) => [...prev, full])
+  }, [])
+
+  const removeTransacao = useCallback((id: string) => {
+    persistRemoveTransacao(id)
+    setTransacoesRemoved((prev) => [...prev, id])
+  }, [])
+
   return (
-    <DataContext.Provider value={{ getAplicacoesByAnimal, addAplicacao, removeAplicacao, getAnimalLote, moveAnimalToLote }}>
+    <DataContext.Provider value={{
+      getAplicacoesByAnimal, addAplicacao, removeAplicacao,
+      getAnimalLote, moveAnimalToLote,
+      getTodasTransacoes, addTransacao, removeTransacao,
+    }}>
       {children}
     </DataContext.Provider>
   )
