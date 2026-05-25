@@ -1,46 +1,43 @@
-import { lotes } from "@/lib/mock/data"
+"use client"
+
+import Link from "next/link"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import { useData } from "@/components/data-provider"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import Link from "next/link"
 
 function statusBadge(status: string) {
   switch (status) {
-    case "ABERTO":
-      return <Badge variant="outline" className="text-gray-600 border-gray-400">Aberto</Badge>
-    case "EM_MONTA":
-      return <Badge className="bg-blue-500 hover:bg-blue-600">Em monta</Badge>
-    case "GESTACAO":
-      return <Badge className="bg-purple-500 hover:bg-purple-600">Gestação</Badge>
-    case "PARTO":
-      return <Badge className="bg-amber-500 hover:bg-amber-600">Parto</Badge>
-    case "ENCERRADO":
-      return <Badge variant="secondary">Encerrado</Badge>
-    default:
-      return <Badge variant="outline">{status}</Badge>
+    case "ABERTO":    return <Badge variant="outline" className="text-gray-600 border-gray-400">Aberto</Badge>
+    case "EM_MONTA":  return <Badge className="bg-blue-500 hover:bg-blue-600">Em monta</Badge>
+    case "GESTACAO":  return <Badge className="bg-purple-500 hover:bg-purple-600">Gestação</Badge>
+    case "PARTO":     return <Badge className="bg-amber-500 hover:bg-amber-600">Parto</Badge>
+    case "ENCERRADO": return <Badge variant="secondary">Encerrado</Badge>
+    default:          return <Badge variant="outline">{status}</Badge>
   }
 }
 
 function borderTopClass(status: string) {
   switch (status) {
-    case "PARTO":      return "border-t-amber-500"
-    case "EM_MONTA":   return "border-t-blue-500"
-    case "GESTACAO":   return "border-t-purple-500"
-    case "ENCERRADO":  return "border-t-gray-400"
-    case "ABERTO":
-    default:           return "border-t-green-500"
+    case "PARTO":     return "border-t-amber-500"
+    case "EM_MONTA":  return "border-t-blue-500"
+    case "GESTACAO":  return "border-t-purple-500"
+    case "ENCERRADO": return "border-t-gray-400"
+    default:          return "border-t-green-500"
   }
 }
 
 export default function LotesPage() {
+  const { lotes, loading } = useData()
+
+  if (loading) return <div className="p-6 text-sm text-muted-foreground">Carregando...</div>
+
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Lotes</h1>
-      </div>
+      <div><h1 className="text-2xl font-bold tracking-tight">Lotes</h1></div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {lotes.map((lote) => (
@@ -75,9 +72,7 @@ export default function LotesPage() {
               <Separator />
 
               <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                <span>
-                  <span className="font-medium text-foreground">Touro:</span> {lote.touro}
-                </span>
+                <span><span className="font-medium text-foreground">Touro:</span> {lote.touro}</span>
                 <span>
                   <span className="font-medium text-foreground">Aberto:</span>{" "}
                   {format(lote.dataAbertura, "dd/MM/yyyy", { locale: ptBR })}

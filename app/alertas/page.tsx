@@ -1,18 +1,15 @@
 "use client"
 
 import { useStage } from "@/components/stage-provider"
-import { animais, bezerros, medicamentos, eventosReprodutivos } from "@/lib/mock/data"
+import { useData } from "@/components/data-provider"
 import { computeAlertas } from "@/lib/alerts"
 import type { AlertaTipo, AlertaUrgencia } from "@/lib/alerts"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
 const tipoLabel: Record<AlertaTipo, string> = {
-  parto:       "Parto",
-  desmame:     "Desmame",
-  estoque:     "Estoque",
-  validade:    "Validade",
-  diagnostico: "Diagnóstico",
+  parto: "Parto", desmame: "Desmame", estoque: "Estoque",
+  validade: "Validade", diagnostico: "Diagnóstico",
 }
 
 const tipoBadge: Record<AlertaTipo, string> = {
@@ -31,10 +28,14 @@ const urgenciaLeft: Record<AlertaUrgencia, string> = {
 
 export default function AlertasPage() {
   const { data } = useStage()
+  const { animais, bezerros, medicamentos, eventosReprodutivos, loading } = useData()
+
+  if (loading) return <div className="p-4 md:p-6 text-sm text-muted-foreground">Carregando...</div>
+
   const alertas = computeAlertas({
     today:        data.simDate,
-    animais:      animais as Parameters<typeof computeAlertas>[0]["animais"],
-    bezerros:     bezerros as Parameters<typeof computeAlertas>[0]["bezerros"],
+    animais:      animais      as Parameters<typeof computeAlertas>[0]["animais"],
+    bezerros:     bezerros.filter(b => b.dataDesmameEstimada !== null) as Parameters<typeof computeAlertas>[0]["bezerros"],
     medicamentos: medicamentos as Parameters<typeof computeAlertas>[0]["medicamentos"],
     eventos:      eventosReprodutivos as Parameters<typeof computeAlertas>[0]["eventos"],
   })

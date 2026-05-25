@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect } from "react"
 import { getStoredStageKey, setStoredStageKey, getStageData } from "@/lib/stage-store"
 import { computeAlertas } from "@/lib/alerts"
-import { animais, bezerros, medicamentos, eventosReprodutivos } from "@/lib/mock/data"
+import { useData } from "@/components/data-provider"
 import type { StageData } from "@/lib/stages/types"
 
 interface StageContextValue {
@@ -17,6 +17,7 @@ const StageContext = createContext<StageContextValue | null>(null)
 
 export function StageProvider({ children }: { children: React.ReactNode }) {
   const [stageKey, setStageKey] = useState("1")
+  const { animais, bezerros, medicamentos, eventosReprodutivos } = useData()
 
   useEffect(() => {
     setStageKey(getStoredStageKey())
@@ -26,8 +27,8 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
 
   const alertCount = computeAlertas({
     today:        data.simDate,
-    animais:      animais as Parameters<typeof computeAlertas>[0]["animais"],
-    bezerros:     bezerros as Parameters<typeof computeAlertas>[0]["bezerros"],
+    animais:      animais      as Parameters<typeof computeAlertas>[0]["animais"],
+    bezerros:     bezerros.filter(b => b.dataDesmameEstimada) as Parameters<typeof computeAlertas>[0]["bezerros"],
     medicamentos: medicamentos as Parameters<typeof computeAlertas>[0]["medicamentos"],
     eventos:      eventosReprodutivos as Parameters<typeof computeAlertas>[0]["eventos"],
   }).length

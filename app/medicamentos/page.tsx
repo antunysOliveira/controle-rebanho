@@ -1,61 +1,45 @@
+"use client"
+
 import Link from "next/link"
 import { format, differenceInDays } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { medicamentos } from "@/lib/mock/data"
+import { useData } from "@/components/data-provider"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
+  Table, TableHeader, TableRow, TableHead, TableBody, TableCell,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 
 type TipoMed = "HORMONIO" | "ANTIBIOTICO" | "ANTIPARASITARIO" | "VITAMINA" | "OUTRO"
 
 const tipoLabel: Record<TipoMed, string> = {
-  HORMONIO: "Hormônio",
-  ANTIBIOTICO: "Antibiótico",
-  ANTIPARASITARIO: "Antiparasitário",
-  VITAMINA: "Vitamina",
-  OUTRO: "Outro",
+  HORMONIO: "Hormônio", ANTIBIOTICO: "Antibiótico",
+  ANTIPARASITARIO: "Antiparasitário", VITAMINA: "Vitamina", OUTRO: "Outro",
 }
 
 function TipoBadge({ tipo }: { tipo: string }) {
-  if (tipo === "HORMONIO") {
-    return <Badge variant="outline" className="text-purple-700 border-purple-400">{tipoLabel.HORMONIO}</Badge>
-  }
-  if (tipo === "ANTIBIOTICO") {
-    return <Badge variant="outline" className="text-blue-700 border-blue-400">{tipoLabel.ANTIBIOTICO}</Badge>
-  }
-  if (tipo === "ANTIPARASITARIO") {
-    return <Badge variant="outline" className="text-green-700 border-green-400">{tipoLabel.ANTIPARASITARIO}</Badge>
-  }
-  if (tipo === "VITAMINA") {
-    return <Badge variant="outline" className="text-amber-700 border-amber-400">{tipoLabel.VITAMINA}</Badge>
-  }
+  if (tipo === "HORMONIO")       return <Badge variant="outline" className="text-purple-700 border-purple-400">{tipoLabel.HORMONIO}</Badge>
+  if (tipo === "ANTIBIOTICO")    return <Badge variant="outline" className="text-blue-700 border-blue-400">{tipoLabel.ANTIBIOTICO}</Badge>
+  if (tipo === "ANTIPARASITARIO")return <Badge variant="outline" className="text-green-700 border-green-400">{tipoLabel.ANTIPARASITARIO}</Badge>
+  if (tipo === "VITAMINA")       return <Badge variant="outline" className="text-amber-700 border-amber-400">{tipoLabel.VITAMINA}</Badge>
   return <Badge variant="secondary">{tipoLabel.OUTRO}</Badge>
 }
 
 export default function MedicamentosPage() {
+  const { medicamentos, loading } = useData()
   const hoje = new Date()
+
+  if (loading) return <div className="p-6 text-sm text-muted-foreground">Carregando...</div>
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Medicamentos</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {medicamentos.length} medicamentos cadastrados
-          </p>
+          <p className="text-muted-foreground text-sm mt-1">{medicamentos.length} medicamentos cadastrados</p>
         </div>
-        <Link
-          href="/medicamentos/aplicacoes"
-          className="text-sm text-green-600 hover:text-green-700 font-medium hover:underline"
-        >
+        <Link href="/medicamentos/aplicacoes" className="text-sm text-green-600 hover:text-green-700 font-medium hover:underline">
           Ver Aplicações →
         </Link>
       </div>
@@ -75,30 +59,22 @@ export default function MedicamentosPage() {
           </TableHeader>
           <TableBody>
             {medicamentos.map((med) => {
-              const baixoEstoque = med.estoqueAtual < med.estoqueMinimo
-              const daysToExpiry = differenceInDays(med.validade, hoje)
+              const baixoEstoque     = med.estoqueAtual < med.estoqueMinimo
+              const daysToExpiry     = differenceInDays(med.validade, hoje)
               const expirandoEmBreve = daysToExpiry >= 0 && daysToExpiry <= 30
-              const progressValue = Math.min((med.estoqueAtual / med.estoqueMinimo) * 100, 100)
-              const progressClass = baixoEstoque
+              const progressValue    = Math.min((med.estoqueAtual / med.estoqueMinimo) * 100, 100)
+              const progressClass    = baixoEstoque
                 ? "[&>div]:bg-red-500"
-                : progressValue >= 100
-                ? "[&>div]:bg-green-500"
-                : "[&>div]:bg-amber-500"
+                : progressValue >= 100 ? "[&>div]:bg-green-500" : "[&>div]:bg-amber-500"
 
               return (
                 <TableRow key={med.id} className={cn(baixoEstoque && "bg-red-50")}>
                   <TableCell className="font-medium">{med.nome}</TableCell>
                   <TableCell className="text-muted-foreground">{med.principioAtivo}</TableCell>
-                  <TableCell>
-                    <TipoBadge tipo={med.tipo} />
-                  </TableCell>
+                  <TableCell><TipoBadge tipo={med.tipo} /></TableCell>
                   <TableCell className="text-right">
-                    <span className={cn("font-mono font-medium", baixoEstoque && "text-destructive")}>
-                      {med.estoqueAtual}
-                    </span>
-                    <span className="text-muted-foreground font-mono">
-                      {" "}/ {med.estoqueMinimo} {med.unidade}
-                    </span>
+                    <span className={cn("font-mono font-medium", baixoEstoque && "text-destructive")}>{med.estoqueAtual}</span>
+                    <span className="text-muted-foreground font-mono"> / {med.estoqueMinimo} {med.unidade}</span>
                   </TableCell>
                   <TableCell>
                     <Progress value={progressValue} className={cn("h-2", progressClass)} />

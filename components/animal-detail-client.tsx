@@ -4,13 +4,6 @@ import { useState } from "react"
 import Link from "next/link"
 import { format, differenceInYears } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import {
-  lotes,
-  medicamentos,
-  getAnimalById,
-  getBezerrosByMae,
-  getEventosByAnimal,
-} from "@/lib/mock/data"
 import { useData } from "@/components/data-provider"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
@@ -57,13 +50,21 @@ const EMPTY_FORM = {
 }
 
 export function AnimalDetailClient({ id }: { id: string }) {
+  const {
+    loading, getAnimalById, getBezerrosByMae, getEventosByAnimal,
+    medicamentos, lotes,
+    getAplicacoesByAnimal, addAplicacao, removeAplicacao, moveAnimalToLote,
+  } = useData()
   const animal = getAnimalById(id)
-  const { getAplicacoesByAnimal, addAplicacao, removeAplicacao, getAnimalLote, moveAnimalToLote } = useData()
 
   const [showForm,   setShowForm]   = useState(false)
   const [form,       setForm]       = useState(EMPTY_FORM)
   const [showMove,   setShowMove]   = useState(false)
   const [novoLoteId, setNovoLoteId] = useState("")
+
+  if (loading) {
+    return <div className="p-4 md:p-6 text-sm text-muted-foreground">Carregando...</div>
+  }
 
   if (!animal) {
     return (
@@ -76,8 +77,7 @@ export function AnimalDetailClient({ id }: { id: string }) {
     )
   }
 
-  const loteOverride   = getAnimalLote(id)
-  const loteAtual      = loteOverride ?? { loteId: animal.loteId, lote: animal.lote }
+  const loteAtual = { loteId: animal.loteId, lote: animal.lote }
   const aplicacoes     = getAplicacoesByAnimal(id)
   const bezerros       = getBezerrosByMae(animal.id)
   const eventos        = getEventosByAnimal(animal.id)
@@ -150,9 +150,6 @@ export function AnimalDetailClient({ id }: { id: string }) {
         {animal.nome && <span className="text-xl font-semibold">{animal.nome}</span>}
         <StatusBadge status={animal.status} />
         <Badge variant="secondary">{loteAtual.lote}</Badge>
-        {loteOverride && (
-          <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">Lote alterado</Badge>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

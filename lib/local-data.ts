@@ -55,6 +55,37 @@ export function persistRemoveAplicacao(id: string): void {
   if (!current.includes(id)) save(KEYS.REMOVED, [...current, id])
 }
 
+// ─── Transações financeiras ───────────────────────────────────────────────────
+
+export type CategoriaTransacao = "VENDA_BEZERRO" | "MEDICAMENTO" | "VETERINARIO" | "RACAO" | "OUTRO"
+
+export type TransacaoItem = {
+  id: string
+  tipo: "RECEITA" | "DESPESA"
+  categoria: CategoriaTransacao
+  valor: number
+  data: string   // ISO date string
+  descricao: string
+  animalId?: string
+}
+
+export function getAddedTransacoes(): TransacaoItem[] {
+  return load<TransacaoItem[]>("rebanho-transacoes-added", [])
+}
+
+export function persistAddTransacao(item: TransacaoItem): void {
+  save("rebanho-transacoes-added", [...getAddedTransacoes(), item])
+}
+
+export function getRemovedTransacaoIds(): string[] {
+  return load<string[]>("rebanho-transacoes-removed", [])
+}
+
+export function persistRemoveTransacao(id: string): void {
+  const current = getRemovedTransacaoIds()
+  if (!current.includes(id)) save("rebanho-transacoes-removed", [...current, id])
+}
+
 // ─── Lote overrides ──────────────────────────────────────────────────────────
 
 export function getAnimalLoteOverrides(): AnimalLoteOverride {

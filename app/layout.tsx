@@ -24,14 +24,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className={`${GeistSans.variable} h-full antialiased`}>
       <body className="h-full flex flex-col md:flex-row bg-background">
-        <StageProvider>
-          <DataProvider>
+        <DataProvider>
+          <StageProvider>
             <MobileHeader />
             <Sidebar />
             <main className="flex-1 overflow-auto">{children}</main>
             <PWARegister />
-          </DataProvider>
-        </StageProvider>
+          </StageProvider>
+        </DataProvider>
       </body>
     </html>
   )
