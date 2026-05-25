@@ -63,6 +63,7 @@ model Animal {
   eventos                  EventoReprodutivo[]
   bezerros                 Bezerro[]
   aplicacoes               AplicacaoMedicamento[]
+  transacoes               Transacao[]
   ativo                    Boolean                @default(true)
   criadoEm                 DateTime               @default(now())
 }
@@ -205,4 +206,29 @@ enum CargoFuncionario {
   VAQUEIRO
   ENCARREGADO
   GERENTE
+}
+
+model Transacao {
+  id        String             @id @default(uuid())
+  tipo      TipoTransacao
+  categoria CategoriaTransacao
+  valor     Decimal            @db.Decimal(10, 2)
+  data      DateTime
+  descricao String?
+  animalId  String?
+  animal    Animal?            @relation(fields: [animalId], references: [id])
+  criadoEm  DateTime           @default(now())
+}
+
+enum TipoTransacao {
+  RECEITA
+  DESPESA
+}
+
+enum CategoriaTransacao {
+  VENDA_BEZERRO
+  MEDICAMENTO
+  VETERINARIO
+  RACAO
+  OUTRO
 }

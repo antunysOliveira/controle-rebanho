@@ -4,24 +4,21 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { StageSwitcher } from "@/components/stage-switcher"
-import { Separator } from "@/components/ui/separator"
+import { navItems } from "@/lib/nav-items"
 
-const navItems = [
-  { href: "/",             label: "Dashboard",   icon: "🏠" },
-  { href: "/animais",      label: "Animais",      icon: "🐄" },
-  { href: "/bezerros",     label: "Bezerros",     icon: "🐮" },
-  { href: "/lotes",        label: "Lotes",        icon: "📋" },
-  { href: "/reproducao",   label: "Reprodução",   icon: "🔬" },
-  { href: "/medicamentos", label: "Medicamentos", icon: "💊" },
-  { href: "/equipe",       label: "Equipe",       icon: "👥" },
-  { href: "/relatorios",   label: "Relatórios",   icon: "📊" },
-]
+interface SidebarProps {
+  currentStage: string
+  alertCount: number
+}
 
-export function Sidebar({ currentStage }: { currentStage: string }) {
+export function Sidebar({ currentStage, alertCount }: SidebarProps) {
   const pathname = usePathname()
 
   return (
-    <aside className="w-56 shrink-0 flex flex-col overflow-y-auto" style={{ background: "var(--sidebar)", borderRight: "1px solid var(--sidebar-border)" }}>
+    <aside
+      className="w-56 shrink-0 hidden md:flex flex-col overflow-y-auto"
+      style={{ background: "var(--sidebar)", borderRight: "1px solid var(--sidebar-border)" }}
+    >
       {/* Logo */}
       <div className="p-4 pb-3" style={{ borderBottom: "1px solid var(--sidebar-border)" }}>
         <div className="flex items-center gap-2">
@@ -56,7 +53,12 @@ export function Sidebar({ currentStage }: { currentStage: string }) {
               }
             >
               <span className="text-base">{item.icon}</span>
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.badge && alertCount > 0 && (
+                <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none">
+                  {alertCount}
+                </span>
+              )}
             </Link>
           )
         })}

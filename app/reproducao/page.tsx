@@ -3,25 +3,18 @@ import { ptBR } from "date-fns/locale"
 import { getCurrentStage } from "@/lib/get-stage"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-
-function EtapaBadge({ etapa }: { etapa: string }) {
-  if (etapa === "implante_hormonal")
-    return <Badge className="bg-purple-100 text-purple-700 border-purple-200">Implante</Badge>
-  if (etapa === "inseminacao_iatf")
-    return <Badge className="bg-blue-100 text-blue-700 border-blue-200">Inseminação IATF</Badge>
-  if (etapa === "aguardando_diagnostico")
-    return <Badge className="bg-amber-100 text-amber-700 border-amber-200">Aguard. Diagnóstico</Badge>
-  return <Badge variant="outline">{etapa}</Badge>
-}
+import { IATFStepper } from "@/components/iatf-stepper"
 
 export default async function ReproducaoPage() {
   const { data } = await getCurrentStage()
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Controle Reprodutivo</h1>
-        <p className="text-muted-foreground text-sm mt-1">Protocolos, diagnósticos e repasse de touro · {data.descricao}</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          Protocolos, diagnósticos e repasse de touro · {data.descricao}
+        </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -30,38 +23,23 @@ export default async function ReproducaoPage() {
           <CardHeader>
             <CardTitle>Protocolos IATF Ativos</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             {data.vacasEmProtocolo.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nenhum protocolo ativo.</p>
             ) : (
               data.vacasEmProtocolo.map((p) => (
-                <div key={p.idEtiqueta} className="rounded-lg border p-3 space-y-2">
+                <div key={p.idEtiqueta} className="rounded-lg border p-3 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono font-semibold text-sm">{p.idEtiqueta}</span>
                     {p.nome && <span className="text-sm text-muted-foreground">{p.nome}</span>}
                     <span className="text-xs text-muted-foreground">{p.lote}</span>
-                    <EtapaBadge etapa={p.etapaAtual} />
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <p className="text-muted-foreground">Implante</p>
-                      <p className="font-medium">
-                        {format(p.dataImplante, "dd/MM", { locale: ptBR })}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Inseminação</p>
-                      <p className="font-medium">
-                        {format(p.dataInseminacao, "dd/MM", { locale: ptBR })}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Diagnóstico</p>
-                      <p className="font-medium">
-                        {format(p.dataDiagnostico, "dd/MM", { locale: ptBR })}
-                      </p>
-                    </div>
-                  </div>
+                  <IATFStepper
+                    etapaAtual={p.etapaAtual}
+                    dataImplante={p.dataImplante}
+                    dataInseminacao={p.dataInseminacao}
+                    dataDiagnostico={p.dataDiagnostico}
+                  />
                   {p.veterinario && (
                     <p className="text-xs text-muted-foreground">{p.veterinario}</p>
                   )}
