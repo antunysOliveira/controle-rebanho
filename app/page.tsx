@@ -1,8 +1,10 @@
+"use client"
+
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { getCurrentStage } from "@/lib/get-stage"
+import { useStage } from "@/components/stage-provider"
 
 function diasBadge(dias: number) {
   if (dias <= 7) return <Badge variant="destructive">{dias}d</Badge>
@@ -24,12 +26,12 @@ const statusLoteLabel: Record<string, string> = {
   PARTO: "Parto", ENCERRADO: "Encerrado",
 }
 
-export default async function Dashboard() {
-  const { key, data } = await getCurrentStage()
+export default function Dashboard() {
+  const { stageKey: key, data } = useStage()
   const d = data.simDate
 
   return (
-    <div className="space-y-5">
+    <div className="p-4 md:p-6 space-y-5">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
         <p className="text-muted-foreground text-sm">

@@ -1,4 +1,6 @@
-import { getCurrentStage } from "@/lib/get-stage"
+"use client"
+
+import { useStage } from "@/components/stage-provider"
 import { animais, bezerros, medicamentos, eventosReprodutivos } from "@/lib/mock/data"
 import { computeAlertas } from "@/lib/alerts"
 import type { AlertaTipo, AlertaUrgencia } from "@/lib/alerts"
@@ -27,8 +29,8 @@ const urgenciaLeft: Record<AlertaUrgencia, string> = {
   baixa: "border-l-gray-300",
 }
 
-export default async function AlertasPage() {
-  const { data } = await getCurrentStage()
+export default function AlertasPage() {
+  const { data } = useStage()
   const alertas = computeAlertas({
     today:        data.simDate,
     animais:      animais as Parameters<typeof computeAlertas>[0]["animais"],

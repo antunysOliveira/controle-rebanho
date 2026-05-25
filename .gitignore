@@ -41,3 +41,10 @@ yarn-error.log*
 next-env.d.ts
 
 /lib/generated/prisma
+
+# capacitor native platforms (regenerate with: npx cap add android)
+/android/
+/ios/
+
+# electron build output
+/dist-electron/

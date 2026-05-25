@@ -1,7 +1,6 @@
 "use client"
 
-import { useTransition } from "react"
-import { setStage } from "@/app/actions/stage"
+import { useStage } from "@/components/stage-provider"
 import { cn } from "@/lib/utils"
 
 const STAGES = [
@@ -10,14 +9,8 @@ const STAGES = [
   { key: "3", label: "Estágio 3", sub: "Jan/2026", color: "bg-emerald-600" },
 ]
 
-export function StageSwitcher({ currentStage }: { currentStage: string }) {
-  const [pending, startTransition] = useTransition()
-
-  function handleSelect(key: string) {
-    startTransition(async () => {
-      await setStage(key)
-    })
-  }
+export function StageSwitcher() {
+  const { stageKey, setStage } = useStage()
 
   return (
     <div className="px-2 pb-3">
@@ -26,12 +19,11 @@ export function StageSwitcher({ currentStage }: { currentStage: string }) {
       </p>
       <div className="flex flex-col gap-1">
         {STAGES.map((s) => {
-          const active = currentStage === s.key
+          const active = stageKey === s.key
           return (
             <button
               key={s.key}
-              onClick={() => handleSelect(s.key)}
-              disabled={pending}
+              onClick={() => setStage(s.key)}
               className={cn(
                 "w-full text-left rounded-md px-3 py-2 transition-all text-sm",
                 active

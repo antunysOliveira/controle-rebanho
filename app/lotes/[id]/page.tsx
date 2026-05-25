@@ -2,7 +2,11 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { getLoteById, getAnimaisByLote } from "@/lib/mock/data"
+import { lotes, getLoteById, getAnimaisByLote } from "@/lib/mock/data"
+
+export function generateStaticParams() {
+  return lotes.map((l) => ({ id: l.id }))
+}
 import { Badge } from "@/components/ui/badge"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import {

@@ -2,14 +2,44 @@
   "name": "controle-rebanho",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "electron": "electron .",
+    "electron:dev": "next build && electron .",
+    "cap:sync": "npx cap sync",
+    "cap:android": "npx cap run android",
+    "dist:win": "next build && electron-builder --win --x64",
+    "dist:apk": "next build && npx cap sync android && npx cap build android"
+  },
+  "build": {
+    "appId": "com.rebanho.controle",
+    "productName": "Controle Rebanho",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      "out/**/*",
+      "public/icon-192.png"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon-192.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
     "@prisma/client": "^7.8.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -29,6 +59,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",

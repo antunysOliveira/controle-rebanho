@@ -1,4 +1,6 @@
-import { getCurrentStage } from "@/lib/get-stage"
+"use client"
+
+import { useStage } from "@/components/stage-provider"
 import { animais, medicamentos, aplicacoes } from "@/lib/mock/data"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -46,8 +48,8 @@ function taxaBadge(taxa: number) {
   return <Badge variant="outline" className="text-red-700 border-red-400">{taxa.toFixed(1)}%</Badge>
 }
 
-export default async function RelatoriosPage() {
-  const { data } = await getCurrentStage()
+export default function RelatoriosPage() {
+  const { data } = useStage()
 
   const consumoMap = new Map<string, { nome: string; tipo: string; count: number; totalDose: number; unidade: string }>()
   for (const ap of aplicacoes) {
@@ -72,7 +74,7 @@ export default async function RelatoriosPage() {
     .slice(0, 5)
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-4 md:p-6 space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Relatórios</h1>
         <p className="text-muted-foreground text-sm mt-1">Visão consolidada · {data.descricao}</p>

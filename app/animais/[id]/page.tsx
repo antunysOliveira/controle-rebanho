@@ -3,11 +3,16 @@ import { notFound } from "next/navigation"
 import { format, differenceInYears } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import {
+  animais,
   getAnimalById,
   getBezerrosByMae,
   getEventosByAnimal,
   getAplicacoesByAnimal,
 } from "@/lib/mock/data"
+
+export function generateStaticParams() {
+  return animais.map((a) => ({ id: a.id }))
+}
 import { Badge } from "@/components/ui/badge"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { AnimalTimeline } from "@/components/animal-timeline"

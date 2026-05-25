@@ -1,12 +1,14 @@
+"use client"
+
+import { useStage } from "@/components/stage-provider"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { getCurrentStage } from "@/lib/get-stage"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { IATFStepper } from "@/components/iatf-stepper"
 
-export default async function ReproducaoPage() {
-  const { data } = await getCurrentStage()
+export default function ReproducaoPage() {
+  const { data } = useStage()
 
   return (
     <div className="p-4 md:p-6 space-y-6">

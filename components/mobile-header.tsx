@@ -5,16 +5,13 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { StageSwitcher } from "@/components/stage-switcher"
+import { useStage } from "@/components/stage-provider"
 import { navItems } from "@/lib/nav-items"
 
-interface MobileHeaderProps {
-  currentStage: string
-  alertCount: number
-}
-
-export function MobileHeader({ currentStage, alertCount }: MobileHeaderProps) {
+export function MobileHeader() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const { alertCount } = useStage()
 
   return (
     <>
@@ -49,10 +46,7 @@ export function MobileHeader({ currentStage, alertCount }: MobileHeaderProps) {
 
       {isOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsOpen(false)} />
           <aside
             className="absolute left-0 top-0 h-full w-64 flex flex-col overflow-y-auto"
             style={{ background: "var(--sidebar)" }}
@@ -113,7 +107,7 @@ export function MobileHeader({ currentStage, alertCount }: MobileHeaderProps) {
             </nav>
 
             <div style={{ borderTop: "1px solid var(--sidebar-border)" }} className="pt-3 mt-1">
-              <StageSwitcher currentStage={currentStage} />
+              <StageSwitcher />
             </div>
 
             <div className="px-4 py-2" style={{ borderTop: "1px solid var(--sidebar-border)" }}>

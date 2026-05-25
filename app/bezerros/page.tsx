@@ -1,4 +1,6 @@
-import { getCurrentStage } from "@/lib/get-stage"
+"use client"
+
+import { useStage } from "@/components/stage-provider"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -23,8 +25,8 @@ function statusBadge(status: string) {
   }
 }
 
-export default async function BezerrosPage() {
-  const { data } = await getCurrentStage()
+export default function BezerrosPage() {
+  const { data } = useStage()
   const simDate = data.simDate
 
   const sorted = [...data.bezarrosAtivos].sort(
@@ -32,7 +34,7 @@ export default async function BezerrosPage() {
   )
 
   return (
-    <div className="space-y-4">
+    <div className="p-4 md:p-6 space-y-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Bezerros</h1>
         <p className="text-muted-foreground text-sm">{data.bezarrosAtivos.length} bezerros ativos · {data.descricao}</p>

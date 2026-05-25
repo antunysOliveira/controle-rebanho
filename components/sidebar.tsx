@@ -4,22 +4,18 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { StageSwitcher } from "@/components/stage-switcher"
+import { useStage } from "@/components/stage-provider"
 import { navItems } from "@/lib/nav-items"
 
-interface SidebarProps {
-  currentStage: string
-  alertCount: number
-}
-
-export function Sidebar({ currentStage, alertCount }: SidebarProps) {
+export function Sidebar() {
   const pathname = usePathname()
+  const { alertCount } = useStage()
 
   return (
     <aside
       className="w-56 shrink-0 hidden md:flex flex-col overflow-y-auto"
       style={{ background: "var(--sidebar)", borderRight: "1px solid var(--sidebar-border)" }}
     >
-      {/* Logo */}
       <div className="p-4 pb-3" style={{ borderBottom: "1px solid var(--sidebar-border)" }}>
         <div className="flex items-center gap-2">
           <span className="text-2xl">🐄</span>
@@ -34,7 +30,6 @@ export function Sidebar({ currentStage, alertCount }: SidebarProps) {
         </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 p-2 space-y-0.5 mt-1">
         {navItems.map((item) => {
           const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
@@ -64,12 +59,10 @@ export function Sidebar({ currentStage, alertCount }: SidebarProps) {
         })}
       </nav>
 
-      {/* Stage Switcher */}
       <div style={{ borderTop: "1px solid var(--sidebar-border)" }} className="pt-3 mt-1">
-        <StageSwitcher currentStage={currentStage} />
+        <StageSwitcher />
       </div>
 
-      {/* Footer */}
       <div className="px-4 py-2" style={{ borderTop: "1px solid var(--sidebar-border)" }}>
         <p className="text-xs opacity-40" style={{ color: "var(--sidebar-foreground)" }}>
           Protótipo v0.1
