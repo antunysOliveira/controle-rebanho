@@ -22,7 +22,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${GeistSans.variable} h-full antialiased`}>
-      <body className="h-full flex flex-col md:flex-row bg-background">
+      <body className="h-full flex flex-col md:flex-row bg-background" suppressHydrationWarning>
         <AppProviders>
           <MobileHeader />
           <Sidebar />
