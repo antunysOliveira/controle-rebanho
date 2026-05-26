@@ -46,6 +46,12 @@ interface DataContextValue {
   deleteMedicamento(id: string): Promise<void>
   addEvento(item: Omit<EventoReprodutivo, "id">): Promise<void>
   deleteEvento(id: string): Promise<void>
+  addVeterinario(item: Omit<Veterinario, "id">): Promise<void>
+  updateVeterinario(id: string, item: Omit<Veterinario, "id">): Promise<void>
+  deleteVeterinario(id: string): Promise<void>
+  addEncarregado(item: Omit<Encarregado, "id">): Promise<void>
+  updateEncarregado(id: string, item: Omit<Encarregado, "id">): Promise<void>
+  deleteEncarregado(id: string): Promise<void>
 }
 
 const DataContext = createContext<DataContextValue | null>(null)
@@ -401,6 +407,54 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!error) setEventos(prev => prev.filter(e => e.id !== id))
   }, [])
 
+  // ── Veterinario CRUD ───────────────────────────────────────────────────────
+
+  const addVeterinario = useCallback(async (item: Omit<Veterinario, "id">) => {
+    const id = crypto.randomUUID()
+    const { error } = await supabase.from("veterinarios").insert({
+      id, nome: item.nome, crmv: item.crmv, telefone: item.telefone,
+      email: item.email, especialidade: item.especialidade, ativo: item.ativo,
+    })
+    if (!error) setVeterinarios(prev => [...prev, { ...item, id }])
+  }, [])
+
+  const updateVeterinario = useCallback(async (id: string, item: Omit<Veterinario, "id">) => {
+    const { error } = await supabase.from("veterinarios").update({
+      nome: item.nome, crmv: item.crmv, telefone: item.telefone,
+      email: item.email, especialidade: item.especialidade, ativo: item.ativo,
+    }).eq("id", id)
+    if (!error) setVeterinarios(prev => prev.map(v => v.id === id ? { ...v, ...item } : v))
+  }, [])
+
+  const deleteVeterinario = useCallback(async (id: string) => {
+    const { error } = await supabase.from("veterinarios").delete().eq("id", id)
+    if (!error) setVeterinarios(prev => prev.filter(v => v.id !== id))
+  }, [])
+
+  // ── Encarregado CRUD ───────────────────────────────────────────────────────
+
+  const addEncarregado = useCallback(async (item: Omit<Encarregado, "id">) => {
+    const id = crypto.randomUUID()
+    const { error } = await supabase.from("encarregados").insert({
+      id, nome: item.nome, cargo: item.cargo, telefone: item.telefone,
+      lotes: item.lotes, ativo: item.ativo,
+    })
+    if (!error) setEncarregados(prev => [...prev, { ...item, id }])
+  }, [])
+
+  const updateEncarregado = useCallback(async (id: string, item: Omit<Encarregado, "id">) => {
+    const { error } = await supabase.from("encarregados").update({
+      nome: item.nome, cargo: item.cargo, telefone: item.telefone,
+      lotes: item.lotes, ativo: item.ativo,
+    }).eq("id", id)
+    if (!error) setEncarregados(prev => prev.map(e => e.id === id ? { ...e, ...item } : e))
+  }, [])
+
+  const deleteEncarregado = useCallback(async (id: string) => {
+    const { error } = await supabase.from("encarregados").delete().eq("id", id)
+    if (!error) setEncarregados(prev => prev.filter(e => e.id !== id))
+  }, [])
+
   return (
     <DataContext.Provider value={{
       loading,
@@ -416,6 +470,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       addLote, updateLote, deleteLote,
       addMedicamento, updateMedicamento, deleteMedicamento,
       addEvento, deleteEvento,
+      addVeterinario, updateVeterinario, deleteVeterinario,
+      addEncarregado, updateEncarregado, deleteEncarregado,
     }}>
       {children}
     </DataContext.Provider>
