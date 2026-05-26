@@ -1,17 +1,15 @@
 "use client"
 
+import { useMemo } from "react"
 import { useStage } from "@/components/stage-provider"
-import { animais, medicamentos, aplicacoes } from "@/lib/mock/data"
+import { useData } from "@/components/data-provider"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
+  Table, TableHeader, TableRow, TableHead, TableBody, TableCell,
 } from "@/components/ui/table"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 
 type TipoMed = "HORMONIO" | "ANTIBIOTICO" | "ANTIPARASITARIO" | "VITAMINA" | "OUTRO"
 
@@ -25,53 +23,86 @@ const tipoLabel: Record<TipoMed, string> = {
 
 function loteStatusBadge(status: string) {
   switch (status) {
-    case "PARTO":
-      return <Badge className="bg-amber-500 hover:bg-amber-600 text-white">Parto</Badge>
-    case "EM_MONTA":
-      return <Badge className="bg-blue-500 hover:bg-blue-600 text-white">Em Monta</Badge>
-    case "GESTACAO":
-      return <Badge className="bg-purple-500 hover:bg-purple-600 text-white">Gestação</Badge>
-    case "ENCERRADO":
-      return <Badge variant="secondary">Encerrado</Badge>
-    default:
-      return <Badge variant="outline">{status}</Badge>
+    case "PARTO":     return <Badge className="bg-amber-500 hover:bg-amber-600 text-white">Parto</Badge>
+    case "EM_MONTA":  return <Badge className="bg-blue-500 hover:bg-blue-600 text-white">Em Monta</Badge>
+    case "GESTACAO":  return <Badge className="bg-purple-500 hover:bg-purple-600 text-white">Gestação</Badge>
+    case "ENCERRADO": return <Badge variant="secondary">Encerrado</Badge>
+    default:          return <Badge variant="outline">{status}</Badge>
   }
 }
 
 function taxaBadge(taxa: number) {
-  if (taxa >= 80) {
-    return <Badge variant="outline" className="text-green-700 border-green-400">{taxa.toFixed(1)}%</Badge>
-  }
-  if (taxa >= 70) {
-    return <Badge variant="outline" className="text-amber-700 border-amber-400">{taxa.toFixed(1)}%</Badge>
-  }
+  if (taxa >= 80) return <Badge variant="outline" className="text-green-700 border-green-400">{taxa.toFixed(1)}%</Badge>
+  if (taxa >= 70) return <Badge variant="outline" className="text-amber-700 border-amber-400">{taxa.toFixed(1)}%</Badge>
   return <Badge variant="outline" className="text-red-700 border-red-400">{taxa.toFixed(1)}%</Badge>
 }
 
 export default function RelatoriosPage() {
   const { data } = useStage()
+  const { animais, bezerros, lotes, medicamentos, aplicacoes, eventosReprodutivos, loading } = useData()
 
-  const consumoMap = new Map<string, { nome: string; tipo: string; count: number; totalDose: number; unidade: string }>()
-  for (const ap of aplicacoes) {
-    const med = medicamentos.find((m) => m.id === ap.medicamentoId)
-    if (!med) continue
-    const existing = consumoMap.get(ap.medicamentoId)
-    if (existing) {
-      existing.count++
-      existing.totalDose += ap.doseAplicada
-    } else {
-      consumoMap.set(ap.medicamentoId, {
-        nome: med.nome,
-        tipo: med.tipo,
-        count: 1,
-        totalDose: ap.doseAplicada,
-        unidade: med.unidade,
-      })
+  const taxaPrenhez = useMemo(() => {
+    const byLote = new Map<string, { ins: Set<string>; pos: Set<string> }>()
+    for (const a of animais) {
+      const aEvents = eventosReprodutivos.filter(e => e.animalId === a.id)
+      if (!aEvents.some(e => e.tipo === "INSEMINACAO_IATF")) continue
+      if (!byLote.has(a.lote)) byLote.set(a.lote, { ins: new Set(), pos: new Set() })
+      const entry = byLote.get(a.lote)!
+      entry.ins.add(a.id)
+      if (aEvents.some(e => e.tipo === "DIAGNOSTICO_PRENHEZ" && e.resultado === "POSITIVO")) entry.pos.add(a.id)
     }
-  }
-  const top5 = Array.from(consumoMap.values())
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5)
+    return Array.from(byLote.entries()).map(([lote, d]) => ({
+      lote,
+      inseminadas: d.ins.size,
+      positivas: d.pos.size,
+      taxa: d.ins.size > 0 ? (d.pos.size / d.ins.size) * 100 : 0,
+    }))
+  }, [animais, eventosReprodutivos])
+
+  const producaoBezerrosMes = useMemo(() => {
+    const byMonth = new Map<string, { key: Date; machos: number; femeas: number; pesos: number[] }>()
+    for (const b of bezerros) {
+      const label = format(b.dataNascimento, "MMM/yyyy", { locale: ptBR })
+      if (!byMonth.has(label)) byMonth.set(label, { key: b.dataNascimento, machos: 0, femeas: 0, pesos: [] })
+      const m = byMonth.get(label)!
+      if (b.sexo === "M") m.machos++; else m.femeas++
+      m.pesos.push(b.pesoNascimento)
+    }
+    return Array.from(byMonth.entries())
+      .sort(([, a], [, b]) => a.key.getTime() - b.key.getTime())
+      .map(([periodo, d]) => ({
+        periodo: periodo.charAt(0).toUpperCase() + periodo.slice(1),
+        nascimentos: d.machos + d.femeas,
+        machos: d.machos,
+        femeas: d.femeas,
+        pesoMedio: d.pesos.length > 0
+          ? `${(d.pesos.reduce((a, b) => a + b, 0) / d.pesos.length).toFixed(1)} kg`
+          : null,
+      }))
+  }, [bezerros])
+
+  const top5 = useMemo(() => {
+    const consumoMap = new Map<string, { nome: string; tipo: string; count: number; totalDose: number; unidade: string }>()
+    for (const ap of aplicacoes) {
+      const med = medicamentos.find(m => m.id === ap.medicamentoId)
+      if (!med) continue
+      const existing = consumoMap.get(ap.medicamentoId)
+      if (existing) { existing.count++; existing.totalDose += ap.doseAplicada }
+      else consumoMap.set(ap.medicamentoId, { nome: med.nome, tipo: med.tipo, count: 1, totalDose: ap.doseAplicada, unidade: med.unidade })
+    }
+    return Array.from(consumoMap.values()).sort((a, b) => b.count - a.count).slice(0, 5)
+  }, [aplicacoes, medicamentos])
+
+  const visaoGeralLotes = useMemo(() => lotes.map(l => ({
+    nome: l.nome, status: l.status,
+    totalVacas: l.totalVacas, gestantes: l.gestantes,
+    paridasNoMes: l.paridasNoMes, bezerrosVivos: l.bezerrosVivos, desmamados: l.desmamados,
+  })), [lotes])
+
+  const protocolosAtivos = animais.filter(a => a.status === "EM_PROTOCOLO").length
+  const bezerrosAtivos   = bezerros.filter(b => b.status === "MAMANDO").length
+
+  if (loading) return <div className="p-4 md:p-6 text-sm text-muted-foreground">Carregando...</div>
 
   return (
     <div className="p-4 md:p-6 space-y-8">
@@ -80,7 +111,6 @@ export default function RelatoriosPage() {
         <p className="text-muted-foreground text-sm mt-1">Visão consolidada · {data.descricao}</p>
       </div>
 
-      {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-5 pb-4">
@@ -98,8 +128,8 @@ export default function RelatoriosPage() {
             <div className="flex items-center gap-3">
               <span className="text-3xl">🐮</span>
               <div>
-                <p className="text-3xl font-bold leading-none">{data.bezarrosAtivos.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">Bezerros Ativos</p>
+                <p className="text-3xl font-bold leading-none">{bezerrosAtivos}</p>
+                <p className="text-xs text-muted-foreground mt-1">Bezerros Mamando</p>
               </div>
             </div>
           </CardContent>
@@ -109,7 +139,7 @@ export default function RelatoriosPage() {
             <div className="flex items-center gap-3">
               <span className="text-3xl">🔬</span>
               <div>
-                <p className="text-3xl font-bold leading-none">{data.vacasEmProtocolo.length}</p>
+                <p className="text-3xl font-bold leading-none">{protocolosAtivos}</p>
                 <p className="text-xs text-muted-foreground mt-1">Protocolos Ativos</p>
               </div>
             </div>
@@ -120,7 +150,7 @@ export default function RelatoriosPage() {
             <div className="flex items-center gap-3">
               <span className="text-3xl">💊</span>
               <div>
-                <p className="text-3xl font-bold leading-none">{data.aplicacoesCount}</p>
+                <p className="text-3xl font-bold leading-none">{aplicacoes.length}</p>
                 <p className="text-xs text-muted-foreground mt-1">Aplicações de Medicamentos</p>
               </div>
             </div>
@@ -128,7 +158,6 @@ export default function RelatoriosPage() {
         </Card>
       </div>
 
-      {/* Taxa de Prenhez */}
       <Card className="border-l-4 border-l-blue-500">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold">Taxa de Prenhez por Lote</CardTitle>
@@ -144,7 +173,7 @@ export default function RelatoriosPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.taxaPrenhez.map((row) => (
+              {taxaPrenhez.map((row) => (
                 <TableRow key={row.lote}>
                   <TableCell className="font-medium">{row.lote}</TableCell>
                   <TableCell className="text-right">{row.inseminadas}</TableCell>
@@ -157,7 +186,6 @@ export default function RelatoriosPage() {
         </CardContent>
       </Card>
 
-      {/* Produção de Bezerros */}
       <Card className="border-l-4 border-l-teal-500">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold">Produção de Bezerros por Período</CardTitle>
@@ -174,18 +202,14 @@ export default function RelatoriosPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.producaoBezerrosMes.map((row) => (
+              {producaoBezerrosMes.map((row) => (
                 <TableRow key={row.periodo}>
                   <TableCell className="font-medium">{row.periodo}</TableCell>
                   <TableCell className="text-right">{row.nascimentos}</TableCell>
+                  <TableCell className="text-right">{row.machos}</TableCell>
+                  <TableCell className="text-right">{row.femeas}</TableCell>
                   <TableCell className="text-right">
-                    {row.machos !== null ? row.machos : <span className="text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {row.femeas !== null ? row.femeas : <span className="text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {row.pesoMedio !== null ? row.pesoMedio : <span className="text-muted-foreground">—</span>}
+                    {row.pesoMedio ?? <span className="text-muted-foreground">—</span>}
                   </TableCell>
                 </TableRow>
               ))}
@@ -194,7 +218,6 @@ export default function RelatoriosPage() {
         </CardContent>
       </Card>
 
-      {/* Consumo de Medicamentos */}
       <Card className="border-l-4 border-l-amber-500">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold">Consumo de Medicamentos (Top 5)</CardTitle>
@@ -227,13 +250,12 @@ export default function RelatoriosPage() {
         </CardContent>
       </Card>
 
-      {/* Status do Rebanho por Lote */}
       <Card className="border-l-4 border-l-emerald-500">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold">Status do Rebanho por Lote</CardTitle>
         </CardHeader>
         <CardContent className="pt-2 space-y-4">
-          {data.visaoGeralLotes.map((lote) => (
+          {visaoGeralLotes.map((lote) => (
             <div key={lote.nome} className="rounded-lg border p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-sm">{lote.nome}</span>
