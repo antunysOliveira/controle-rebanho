@@ -1,6 +1,5 @@
 "use client"
 
-import { useStage } from "@/components/stage-provider"
 import { useData } from "@/components/data-provider"
 import { computeAlertas } from "@/lib/alerts"
 import type { AlertaTipo, AlertaUrgencia } from "@/lib/alerts"
@@ -27,13 +26,12 @@ const urgenciaLeft: Record<AlertaUrgencia, string> = {
 }
 
 export default function AlertasPage() {
-  const { data } = useStage()
   const { animais, bezerros, medicamentos, eventosReprodutivos, loading } = useData()
 
   if (loading) return <div className="p-4 md:p-6 text-sm text-muted-foreground">Carregando...</div>
 
   const alertas = computeAlertas({
-    today:        data.simDate,
+    today:        new Date(),
     animais:      animais      as Parameters<typeof computeAlertas>[0]["animais"],
     bezerros:     bezerros.filter(b => b.dataDesmameEstimada !== null) as Parameters<typeof computeAlertas>[0]["bezerros"],
     medicamentos: medicamentos as Parameters<typeof computeAlertas>[0]["medicamentos"],
@@ -45,7 +43,7 @@ export default function AlertasPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Alertas</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {alertas.length} alerta{alertas.length !== 1 ? "s" : ""} ativo{alertas.length !== 1 ? "s" : ""} · {data.descricao}
+          {alertas.length} alerta{alertas.length !== 1 ? "s" : ""} ativo{alertas.length !== 1 ? "s" : ""}
         </p>
       </div>
 

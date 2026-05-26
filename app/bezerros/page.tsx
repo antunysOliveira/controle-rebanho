@@ -1,6 +1,5 @@
 "use client"
 
-import { useStage } from "@/components/stage-provider"
 import { useData } from "@/components/data-provider"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,7 +21,6 @@ function statusBadge(status: string) {
 }
 
 export default function BezerrosPage() {
-  const { data } = useStage()
   const { bezerros, loading } = useData()
 
   if (loading) return <div className="p-4 md:p-6 text-sm text-muted-foreground">Carregando...</div>
@@ -35,7 +33,7 @@ export default function BezerrosPage() {
     <div className="p-4 md:p-6 space-y-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Bezerros</h1>
-        <p className="text-muted-foreground text-sm">{bezerros.length} bezerros · {data.descricao}</p>
+        <p className="text-muted-foreground text-sm">{bezerros.length} bezerros</p>
       </div>
 
       <Card className="border-l-4 border-l-teal-500">

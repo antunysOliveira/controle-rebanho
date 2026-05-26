@@ -1,15 +1,24 @@
 "use client"
 
+import { useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { StageSwitcher } from "@/components/stage-switcher"
-import { useStage } from "@/components/stage-provider"
+import { useData } from "@/components/data-provider"
+import { computeAlertas } from "@/lib/alerts"
 import { navItems } from "@/lib/nav-items"
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { alertCount } = useStage()
+  const { animais, bezerros, medicamentos, eventosReprodutivos } = useData()
+
+  const alertCount = useMemo(() => computeAlertas({
+    today:        new Date(),
+    animais:      animais      as Parameters<typeof computeAlertas>[0]["animais"],
+    bezerros:     bezerros.filter(b => b.dataDesmameEstimada !== null) as Parameters<typeof computeAlertas>[0]["bezerros"],
+    medicamentos: medicamentos as Parameters<typeof computeAlertas>[0]["medicamentos"],
+    eventos:      eventosReprodutivos as Parameters<typeof computeAlertas>[0]["eventos"],
+  }).length, [animais, bezerros, medicamentos, eventosReprodutivos])
 
   return (
     <aside
@@ -59,13 +68,9 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div style={{ borderTop: "1px solid var(--sidebar-border)" }} className="pt-3 mt-1">
-        <StageSwitcher />
-      </div>
-
-      <div className="px-4 py-2" style={{ borderTop: "1px solid var(--sidebar-border)" }}>
+      <div className="px-4 py-3" style={{ borderTop: "1px solid var(--sidebar-border)" }}>
         <p className="text-xs opacity-40" style={{ color: "var(--sidebar-foreground)" }}>
-          Protótipo v0.1
+          v0.2
         </p>
       </div>
     </aside>

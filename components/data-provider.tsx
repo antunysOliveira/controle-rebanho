@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
+import { differenceInDays } from "date-fns"
 import { supabase } from "@/lib/supabase"
 import type { Animal, Bezerro, Encarregado, EventoReprodutivo, Lote, Medicamento, Veterinario } from "@/lib/types"
 import { type AplicacaoItem, type TransacaoItem } from "@/lib/local-data"
@@ -70,7 +71,8 @@ function mapBezerro(r: any): Bezerro {
   return {
     id: r.id, idEtiqueta: r.id_etiqueta, maeId: r.mae_id, maeEtiqueta: r.mae_etiqueta,
     sexo: r.sexo, dataNascimento: d(r.data_nascimento)!, pesoNascimento: r.peso_nascimento,
-    pesoAtual: r.peso_atual, diasVida: r.dias_vida,
+    pesoAtual: r.peso_atual,
+    diasVida: differenceInDays(new Date(), d(r.data_nascimento)!),
     dataDesmameEstimada: d(r.data_desmame_estimada), status: r.status,
   }
 }

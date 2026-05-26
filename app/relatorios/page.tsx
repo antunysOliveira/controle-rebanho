@@ -1,7 +1,6 @@
 "use client"
 
 import { useMemo } from "react"
-import { useStage } from "@/components/stage-provider"
 import { useData } from "@/components/data-provider"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -38,7 +37,6 @@ function taxaBadge(taxa: number) {
 }
 
 export default function RelatoriosPage() {
-  const { data } = useStage()
   const { animais, bezerros, lotes, medicamentos, aplicacoes, eventosReprodutivos, loading } = useData()
 
   const taxaPrenhez = useMemo(() => {
@@ -108,7 +106,7 @@ export default function RelatoriosPage() {
     <div className="p-4 md:p-6 space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Relatórios</h1>
-        <p className="text-muted-foreground text-sm mt-1">Visão consolidada · {data.descricao}</p>
+        <p className="text-muted-foreground text-sm mt-1">Visão consolidada</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

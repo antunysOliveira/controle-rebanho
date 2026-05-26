@@ -1,7 +1,6 @@
 "use client"
 
 import { useMemo } from "react"
-import { useStage } from "@/components/stage-provider"
 import { useData } from "@/components/data-provider"
 import { format, addDays, differenceInDays } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -13,8 +12,8 @@ import type { EventoReprodutivo } from "@/lib/types"
 type EtapaProtocolo = "implante_hormonal" | "inseminacao_iatf" | "aguardando_diagnostico"
 
 export default function ReproducaoPage() {
-  const { data } = useStage()
   const { animais, eventosReprodutivos, veterinarios, lotes, loading } = useData()
+  const hoje = useMemo(() => new Date(), [])
 
   const vacasEmProtocolo = useMemo(() => {
     const byAnimal = new Map<string, EventoReprodutivo[]>()
@@ -40,7 +39,7 @@ export default function ReproducaoPage() {
         if (!inseminacao) {
           etapaAtual = "implante_hormonal"
         } else {
-          etapaAtual = differenceInDays(data.simDate, inseminacao.data) >= 28
+          etapaAtual = differenceInDays(hoje, inseminacao.data) >= 28
             ? "aguardando_diagnostico"
             : "inseminacao_iatf"
         }
@@ -50,7 +49,7 @@ export default function ReproducaoPage() {
 
         return [{ idEtiqueta: a.idEtiqueta, nome: a.nome, lote: a.lote, etapaAtual, dataImplante, dataInseminacao, dataDiagnostico, veterinario: vet?.nome }]
       })
-  }, [animais, eventosReprodutivos, veterinarios, data.simDate])
+  }, [animais, eventosReprodutivos, veterinarios, hoje])
 
   const diagnosticosPendentes = useMemo(() => {
     return animais
@@ -66,10 +65,10 @@ export default function ReproducaoPage() {
         const hasDiag = events.some(e => e.tipo === "DIAGNOSTICO_PRENHEZ" && e.data > inseminacao.data)
         if (hasDiag) return []
 
-        return [{ idEtiqueta: a.idEtiqueta, nome: a.nome, dataInseminacao: inseminacao.data, diasAguardando: differenceInDays(data.simDate, inseminacao.data), lote: a.lote }]
+        return [{ idEtiqueta: a.idEtiqueta, nome: a.nome, dataInseminacao: inseminacao.data, diasAguardando: differenceInDays(hoje, inseminacao.data), lote: a.lote }]
       })
       .sort((a, b) => b.diasAguardando - a.diasAguardando)
-  }, [animais, eventosReprodutivos, data.simDate])
+  }, [animais, eventosReprodutivos, hoje])
 
   const repasseTouros = useMemo(() => {
     return lotes
@@ -90,7 +89,7 @@ export default function ReproducaoPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Controle Reprodutivo</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Protocolos, diagnósticos e repasse de touro · {data.descricao}
+          Protocolos, diagnósticos e repasse de touro
         </p>
       </div>
 
