@@ -32,9 +32,29 @@ interface DataContextValue {
   moveAnimalToLote(animalId: string, loteId: string, lote: string): Promise<void>
   addTransacao(item: Omit<TransacaoItem, "id">): Promise<void>
   removeTransacao(id: string): Promise<void>
+  addAnimal(item: Omit<Animal, "id">): Promise<void>
+  updateAnimal(id: string, item: Omit<Animal, "id">): Promise<void>
+  deleteAnimal(id: string): Promise<void>
+  addBezerro(item: Omit<Bezerro, "id" | "diasVida">): Promise<void>
+  updateBezerro(id: string, item: Omit<Bezerro, "id" | "diasVida">): Promise<void>
+  deleteBezerro(id: string): Promise<void>
+  addLote(item: Omit<Lote, "id">): Promise<void>
+  updateLote(id: string, item: Omit<Lote, "id">): Promise<void>
+  deleteLote(id: string): Promise<void>
+  addMedicamento(item: Omit<Medicamento, "id">): Promise<void>
+  updateMedicamento(id: string, item: Omit<Medicamento, "id">): Promise<void>
+  deleteMedicamento(id: string): Promise<void>
+  addEvento(item: Omit<EventoReprodutivo, "id">): Promise<void>
+  deleteEvento(id: string): Promise<void>
 }
 
 const DataContext = createContext<DataContextValue | null>(null)
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function toISO(dt: Date | null | undefined): string | null {
+  return dt ? dt.toISOString().split("T")[0] : null
+}
 
 // ─── Row mappers ─────────────────────────────────────────────────────────────
 
@@ -237,6 +257,150 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!error) setTransacoes(prev => prev.filter(t => t.id !== id))
   }, [])
 
+  // ── Animal CRUD ────────────────────────────────────────────────────────────
+
+  const addAnimal = useCallback(async (item: Omit<Animal, "id">) => {
+    const id = crypto.randomUUID()
+    const { error } = await supabase.from("animais").insert({
+      id, id_etiqueta: item.idEtiqueta, nome: item.nome ?? null,
+      lote_id: item.loteId, lote: item.lote, status: item.status,
+      data_nascimento: toISO(item.dataNascimento),
+      data_ultimo_parto: toISO(item.dataUltimoParto),
+      data_parto_estimado: toISO(item.dataPartoEstimado),
+      em_lactacao: item.emLactacao, peso_kg: item.pesoKg ?? null, raca: item.raca ?? null,
+    })
+    if (!error) setAnimais(prev => [...prev, { ...item, id }])
+  }, [])
+
+  const updateAnimal = useCallback(async (id: string, item: Omit<Animal, "id">) => {
+    const { error } = await supabase.from("animais").update({
+      id_etiqueta: item.idEtiqueta, nome: item.nome ?? null,
+      lote_id: item.loteId, lote: item.lote, status: item.status,
+      data_nascimento: toISO(item.dataNascimento),
+      data_ultimo_parto: toISO(item.dataUltimoParto),
+      data_parto_estimado: toISO(item.dataPartoEstimado),
+      em_lactacao: item.emLactacao, peso_kg: item.pesoKg ?? null, raca: item.raca ?? null,
+    }).eq("id", id)
+    if (!error) setAnimais(prev => prev.map(a => a.id === id ? { ...a, ...item } : a))
+  }, [])
+
+  const deleteAnimal = useCallback(async (id: string) => {
+    const { error } = await supabase.from("animais").delete().eq("id", id)
+    if (!error) setAnimais(prev => prev.filter(a => a.id !== id))
+  }, [])
+
+  // ── Bezerro CRUD ───────────────────────────────────────────────────────────
+
+  const addBezerro = useCallback(async (item: Omit<Bezerro, "id" | "diasVida">) => {
+    const id = crypto.randomUUID()
+    const { error } = await supabase.from("bezerros").insert({
+      id, id_etiqueta: item.idEtiqueta, mae_id: item.maeId, mae_etiqueta: item.maeEtiqueta,
+      sexo: item.sexo, data_nascimento: toISO(item.dataNascimento),
+      peso_nascimento: item.pesoNascimento, peso_atual: item.pesoAtual,
+      data_desmame_estimada: toISO(item.dataDesmameEstimada), status: item.status,
+    })
+    if (!error) setBezerros(prev => [
+      ...prev,
+      { ...item, id, diasVida: differenceInDays(new Date(), item.dataNascimento) },
+    ])
+  }, [])
+
+  const updateBezerro = useCallback(async (id: string, item: Omit<Bezerro, "id" | "diasVida">) => {
+    const { error } = await supabase.from("bezerros").update({
+      id_etiqueta: item.idEtiqueta, mae_id: item.maeId, mae_etiqueta: item.maeEtiqueta,
+      sexo: item.sexo, data_nascimento: toISO(item.dataNascimento),
+      peso_nascimento: item.pesoNascimento, peso_atual: item.pesoAtual,
+      data_desmame_estimada: toISO(item.dataDesmameEstimada), status: item.status,
+    }).eq("id", id)
+    if (!error) setBezerros(prev => prev.map(b =>
+      b.id === id
+        ? { ...b, ...item, diasVida: differenceInDays(new Date(), item.dataNascimento) }
+        : b
+    ))
+  }, [])
+
+  const deleteBezerro = useCallback(async (id: string) => {
+    const { error } = await supabase.from("bezerros").delete().eq("id", id)
+    if (!error) setBezerros(prev => prev.filter(b => b.id !== id))
+  }, [])
+
+  // ── Lote CRUD ──────────────────────────────────────────────────────────────
+
+  const addLote = useCallback(async (item: Omit<Lote, "id">) => {
+    const id = crypto.randomUUID()
+    const { error } = await supabase.from("lotes").insert({
+      id, nome: item.nome, tipo: item.tipo, status: item.status,
+      data_abertura: toISO(item.dataAbertura), data_fechamento: toISO(item.dataFechamento),
+      touro: item.touro, total_vacas: item.totalVacas, gestantes: item.gestantes,
+      paridas_no_mes: item.paridasNoMes, bezerros_vivos: item.bezerrosVivos,
+      desmamados: item.desmamados, encarregados: item.encarregados ?? [],
+    })
+    if (!error) setLotes(prev => [...prev, { ...item, id }])
+  }, [])
+
+  const updateLote = useCallback(async (id: string, item: Omit<Lote, "id">) => {
+    const { error } = await supabase.from("lotes").update({
+      nome: item.nome, tipo: item.tipo, status: item.status,
+      data_abertura: toISO(item.dataAbertura), data_fechamento: toISO(item.dataFechamento),
+      touro: item.touro, total_vacas: item.totalVacas, gestantes: item.gestantes,
+      paridas_no_mes: item.paridasNoMes, bezerros_vivos: item.bezerrosVivos,
+      desmamados: item.desmamados,
+    }).eq("id", id)
+    if (!error) setLotes(prev => prev.map(l => l.id === id ? { ...l, ...item } : l))
+  }, [])
+
+  const deleteLote = useCallback(async (id: string) => {
+    const { error } = await supabase.from("lotes").delete().eq("id", id)
+    if (!error) setLotes(prev => prev.filter(l => l.id !== id))
+  }, [])
+
+  // ── Medicamento CRUD ───────────────────────────────────────────────────────
+
+  const addMedicamento = useCallback(async (item: Omit<Medicamento, "id">) => {
+    const id = crypto.randomUUID()
+    const { error } = await supabase.from("medicamentos").insert({
+      id, nome: item.nome, principio_ativo: item.principioAtivo, tipo: item.tipo,
+      unidade: item.unidade, dose_padrao: item.dosePadrao,
+      estoque_atual: item.estoqueAtual, estoque_minimo: item.estoqueMinimo,
+      validade: toISO(item.validade), fornecedor: item.fornecedor, ativo: item.ativo,
+    })
+    if (!error) setMedicamentos(prev => [...prev, { ...item, id }])
+  }, [])
+
+  const updateMedicamento = useCallback(async (id: string, item: Omit<Medicamento, "id">) => {
+    const { error } = await supabase.from("medicamentos").update({
+      nome: item.nome, principio_ativo: item.principioAtivo, tipo: item.tipo,
+      unidade: item.unidade, dose_padrao: item.dosePadrao,
+      estoque_atual: item.estoqueAtual, estoque_minimo: item.estoqueMinimo,
+      validade: toISO(item.validade), fornecedor: item.fornecedor, ativo: item.ativo,
+    }).eq("id", id)
+    if (!error) setMedicamentos(prev => prev.map(m => m.id === id ? { ...m, ...item } : m))
+  }, [])
+
+  const deleteMedicamento = useCallback(async (id: string) => {
+    const { error } = await supabase.from("medicamentos").delete().eq("id", id)
+    if (!error) setMedicamentos(prev => prev.filter(m => m.id !== id))
+  }, [])
+
+  // ── Evento Reprodutivo CRUD ────────────────────────────────────────────────
+
+  const addEvento = useCallback(async (item: Omit<EventoReprodutivo, "id">) => {
+    const id = crypto.randomUUID()
+    const { error } = await supabase.from("eventos_reprodutivos").insert({
+      id, animal_id: item.animalId, etiqueta: item.etiqueta, tipo: item.tipo,
+      data: toISO(item.data), veterinario_id: item.veterinarioId ?? null,
+      resultado: item.resultado ?? null, obs: item.obs ?? null,
+    })
+    if (!error) setEventos(prev =>
+      [{ ...item, id }, ...prev].sort((a, b) => b.data.getTime() - a.data.getTime())
+    )
+  }, [])
+
+  const deleteEvento = useCallback(async (id: string) => {
+    const { error } = await supabase.from("eventos_reprodutivos").delete().eq("id", id)
+    if (!error) setEventos(prev => prev.filter(e => e.id !== id))
+  }, [])
+
   return (
     <DataContext.Provider value={{
       loading,
@@ -247,6 +411,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       getAnimalById, getLoteById, getAnimaisByLote, getBezerrosByMae,
       getEventosByAnimal, getAplicacoesByAnimal, getAnimalLote, getTodasTransacoes,
       addAplicacao, removeAplicacao, moveAnimalToLote, addTransacao, removeTransacao,
+      addAnimal, updateAnimal, deleteAnimal,
+      addBezerro, updateBezerro, deleteBezerro,
+      addLote, updateLote, deleteLote,
+      addMedicamento, updateMedicamento, deleteMedicamento,
+      addEvento, deleteEvento,
     }}>
       {children}
     </DataContext.Provider>

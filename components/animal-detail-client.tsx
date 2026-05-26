@@ -5,12 +5,30 @@ import Link from "next/link"
 import { format, differenceInYears } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { useData } from "@/components/data-provider"
+import { Modal } from "@/components/modal"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { AnimalTimeline } from "@/components/animal-timeline"
 
 type Via = "INTRAMUSCULAR" | "SUBCUTANEA" | "ORAL" | "TOPICA"
 type StatusType = "GESTANTE" | "LACTANDO" | "VAZIA" | "EM_PROTOCOLO" | "INSEMINADA" | "DESCARTE"
+type TipoEvento = "IMPLANTE_HORMONAL" | "INSEMINACAO_IATF" | "DIAGNOSTICO_PRENHEZ" | "PARTO" | "ABORTO" | "DESCARTE"
+
+const ANIMAL_STATUS: StatusType[] = ["GESTANTE", "LACTANDO", "VAZIA", "EM_PROTOCOLO", "INSEMINADA", "DESCARTE"]
+const STATUS_LABEL: Record<StatusType, string> = {
+  GESTANTE: "Gestante", LACTANDO: "Lactando", VAZIA: "Vazia",
+  EM_PROTOCOLO: "Em Protocolo", INSEMINADA: "Inseminada", DESCARTE: "Descarte",
+}
+const EVENTO_TIPOS: TipoEvento[] = ["IMPLANTE_HORMONAL", "INSEMINACAO_IATF", "DIAGNOSTICO_PRENHEZ", "PARTO", "ABORTO", "DESCARTE"]
+const EVENTO_LABEL: Record<TipoEvento, string> = {
+  IMPLANTE_HORMONAL: "Implante Hormonal", INSEMINACAO_IATF: "Inseminação IATF",
+  DIAGNOSTICO_PRENHEZ: "Diagnóstico de Prenhez", PARTO: "Parto",
+  ABORTO: "Aborto", DESCARTE: "Descarte",
+}
+
+const INPUT = "w-full border rounded-md px-3 py-1.5 text-sm bg-background"
+const LABEL = "text-xs font-medium text-muted-foreground"
 
 const statusLabel: Record<StatusType, string> = {
   GESTANTE: "Gestante", LACTANDO: "Lactando", VAZIA: "Vazia",
@@ -49,18 +67,36 @@ const EMPTY_FORM = {
   proximaDose:   "",
 }
 
+type EditForm = {
+  status: string; dataNascimento: string; dataUltimoParto: string
+  dataPartoEstimado: string; emLactacao: boolean; pesoKg: string; raca: string
+}
+
+type EventoForm = {
+  tipo: TipoEvento; data: string; resultado: string; obs: string
+}
+
+const EMPTY_EVENTO: EventoForm = {
+  tipo: "INSEMINACAO_IATF", data: new Date().toISOString().split("T")[0], resultado: "", obs: "",
+}
+
 export function AnimalDetailClient({ id }: { id: string }) {
   const {
     loading, getAnimalById, getBezerrosByMae, getEventosByAnimal,
     medicamentos, lotes,
     getAplicacoesByAnimal, addAplicacao, removeAplicacao, moveAnimalToLote,
+    updateAnimal, addEvento, deleteEvento,
   } = useData()
   const animal = getAnimalById(id)
 
-  const [showForm,   setShowForm]   = useState(false)
-  const [form,       setForm]       = useState(EMPTY_FORM)
-  const [showMove,   setShowMove]   = useState(false)
-  const [novoLoteId, setNovoLoteId] = useState("")
+  const [showForm,      setShowForm]      = useState(false)
+  const [form,          setForm]          = useState(EMPTY_FORM)
+  const [showMove,      setShowMove]      = useState(false)
+  const [novoLoteId,    setNovoLoteId]    = useState("")
+  const [showEditAnimal, setShowEditAnimal] = useState(false)
+  const [editForm,      setEditForm]      = useState<EditForm | null>(null)
+  const [showEventoForm, setShowEventoForm] = useState(false)
+  const [eventoForm,    setEventoForm]    = useState<EventoForm>(EMPTY_EVENTO)
 
   if (loading) {
     return <div className="p-4 md:p-6 text-sm text-muted-foreground">Carregando...</div>
@@ -139,6 +175,55 @@ export function AnimalDetailClient({ id }: { id: string }) {
     setNovoLoteId("")
   }
 
+  function openEditAnimal() {
+    if (!animal) return
+    setEditForm({
+      status: animal.status,
+      dataNascimento: animal.dataNascimento.toISOString().split("T")[0],
+      dataUltimoParto: animal.dataUltimoParto?.toISOString().split("T")[0] ?? "",
+      dataPartoEstimado: animal.dataPartoEstimado?.toISOString().split("T")[0] ?? "",
+      emLactacao: animal.emLactacao,
+      pesoKg: animal.pesoKg != null ? String(animal.pesoKg) : "",
+      raca: animal.raca ?? "",
+    })
+    setShowEditAnimal(true)
+  }
+
+  async function handleSubmitEditAnimal(e: React.FormEvent) {
+    e.preventDefault()
+    if (!animal || !editForm) return
+    await updateAnimal(id, {
+      idEtiqueta: animal.idEtiqueta,
+      nome: animal.nome,
+      loteId: animal.loteId,
+      lote: animal.lote,
+      status: editForm.status,
+      dataNascimento: new Date(editForm.dataNascimento + "T12:00:00"),
+      dataUltimoParto: editForm.dataUltimoParto ? new Date(editForm.dataUltimoParto + "T12:00:00") : null,
+      dataPartoEstimado: editForm.dataPartoEstimado ? new Date(editForm.dataPartoEstimado + "T12:00:00") : null,
+      emLactacao: editForm.emLactacao,
+      pesoKg: editForm.pesoKg ? Number(editForm.pesoKg) : null,
+      raca: editForm.raca || null,
+    })
+    setShowEditAnimal(false)
+  }
+
+  async function handleSubmitEvento(e: React.FormEvent) {
+    e.preventDefault()
+    if (!animal) return
+    await addEvento({
+      animalId: id,
+      etiqueta: animal.idEtiqueta,
+      tipo: eventoForm.tipo,
+      data: new Date(eventoForm.data + "T12:00:00"),
+      veterinarioId: null,
+      resultado: eventoForm.resultado || null,
+      obs: eventoForm.obs || null,
+    })
+    setEventoForm(EMPTY_EVENTO)
+    setShowEventoForm(false)
+  }
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -150,7 +235,51 @@ export function AnimalDetailClient({ id }: { id: string }) {
         {animal.nome && <span className="text-xl font-semibold">{animal.nome}</span>}
         <StatusBadge status={animal.status} />
         <Badge variant="secondary">{loteAtual.lote}</Badge>
+        <Button size="sm" variant="outline" onClick={openEditAnimal}>Editar Animal</Button>
       </div>
+
+      <Modal open={showEditAnimal} onClose={() => setShowEditAnimal(false)} title="Editar Animal">
+        {editForm && (
+          <form onSubmit={handleSubmitEditAnimal} className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1 sm:col-span-2">
+                <label className={LABEL}>Status</label>
+                <select value={editForm.status} onChange={e => setEditForm(f => f && ({ ...f, status: e.target.value }))} className={INPUT}>
+                  {ANIMAL_STATUS.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className={LABEL}>Nascimento</label>
+                <input type="date" value={editForm.dataNascimento} onChange={e => setEditForm(f => f && ({ ...f, dataNascimento: e.target.value }))} className={INPUT} />
+              </div>
+              <div className="space-y-1">
+                <label className={LABEL}>Raça</label>
+                <input value={editForm.raca} onChange={e => setEditForm(f => f && ({ ...f, raca: e.target.value }))} className={INPUT} placeholder="Ex: Nelore" />
+              </div>
+              <div className="space-y-1">
+                <label className={LABEL}>Último Parto</label>
+                <input type="date" value={editForm.dataUltimoParto} onChange={e => setEditForm(f => f && ({ ...f, dataUltimoParto: e.target.value }))} className={INPUT} />
+              </div>
+              <div className="space-y-1">
+                <label className={LABEL}>Parto Estimado</label>
+                <input type="date" value={editForm.dataPartoEstimado} onChange={e => setEditForm(f => f && ({ ...f, dataPartoEstimado: e.target.value }))} className={INPUT} />
+              </div>
+              <div className="space-y-1">
+                <label className={LABEL}>Peso (kg)</label>
+                <input type="number" min="0" step="0.1" value={editForm.pesoKg} onChange={e => setEditForm(f => f && ({ ...f, pesoKg: e.target.value }))} className={INPUT} />
+              </div>
+              <div className="flex items-center gap-2 pt-3">
+                <input id="edit-lactacao" type="checkbox" checked={editForm.emLactacao} onChange={e => setEditForm(f => f && ({ ...f, emLactacao: e.target.checked }))} className="h-4 w-4" />
+                <label htmlFor="edit-lactacao" className="text-sm">Em lactação</label>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end pt-2 border-t border-border">
+              <Button type="button" variant="outline" size="sm" onClick={() => setShowEditAnimal(false)}>Cancelar</Button>
+              <Button type="submit" size="sm">Salvar</Button>
+            </div>
+          </form>
+        )}
+      </Modal>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -455,9 +584,51 @@ export function AnimalDetailClient({ id }: { id: string }) {
 
           {/* Histórico (timeline) */}
           <Card className="border-l-4 border-l-blue-500">
-            <CardHeader><CardTitle>Histórico</CardTitle></CardHeader>
-            <CardContent>
-              <AnimalTimeline eventos={eventos} aplicacoes={aplicacoesForTimeline} />
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle>Histórico</CardTitle>
+                <button
+                  onClick={() => setShowEventoForm(v => !v)}
+                  className="text-xs px-3 py-1.5 rounded bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                >
+                  {showEventoForm ? "Cancelar" : "+ Evento"}
+                </button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {showEventoForm && (
+                <form onSubmit={handleSubmitEvento} className="rounded-lg border p-3 space-y-3 bg-muted/30">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Novo Evento Reprodutivo</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1 col-span-2">
+                      <label className={LABEL}>Tipo *</label>
+                      <select
+                        value={eventoForm.tipo}
+                        onChange={e => setEventoForm(f => ({ ...f, tipo: e.target.value as TipoEvento }))}
+                        className={INPUT}
+                      >
+                        {EVENTO_TIPOS.map(t => <option key={t} value={t}>{EVENTO_LABEL[t]}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className={LABEL}>Data *</label>
+                      <input required type="date" value={eventoForm.data} onChange={e => setEventoForm(f => ({ ...f, data: e.target.value }))} className={INPUT} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className={LABEL}>Resultado</label>
+                      <input value={eventoForm.resultado} onChange={e => setEventoForm(f => ({ ...f, resultado: e.target.value }))} className={INPUT} placeholder="Positivo / Negativo" />
+                    </div>
+                    <div className="space-y-1 col-span-2">
+                      <label className={LABEL}>Observação</label>
+                      <input value={eventoForm.obs} onChange={e => setEventoForm(f => ({ ...f, obs: e.target.value }))} className={INPUT} placeholder="Opcional" />
+                    </div>
+                  </div>
+                  <button type="submit" className="w-full text-sm py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
+                    Salvar Evento
+                  </button>
+                </form>
+              )}
+              <AnimalTimeline eventos={eventos} aplicacoes={aplicacoesForTimeline} onDeleteEvento={deleteEvento} />
             </CardContent>
           </Card>
         </div>

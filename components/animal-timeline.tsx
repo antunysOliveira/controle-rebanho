@@ -60,9 +60,10 @@ function dotColor(item: TimelineItem): string {
 interface AnimalTimelineProps {
   eventos: EventoMock[]
   aplicacoes: AplicacaoMock[]
+  onDeleteEvento?: (id: string) => void
 }
 
-export function AnimalTimeline({ eventos, aplicacoes }: AnimalTimelineProps) {
+export function AnimalTimeline({ eventos, aplicacoes, onDeleteEvento }: AnimalTimelineProps) {
   const items: TimelineItem[] = [
     ...eventos.map(e => ({ kind: "evento" as const, id: e.id, data: e.data, tipo: e.tipo, resultado: e.resultado, obs: e.obs })),
     ...aplicacoes.map(a => ({ kind: "aplicacao" as const, id: a.id, data: a.data, medicamento: a.medicamento, doseAplicada: a.doseAplicada, via: a.via, motivo: a.motivo, carenciaDias: a.carenciaDias, proximaDose: a.proximaDose })),
@@ -86,6 +87,15 @@ export function AnimalTimeline({ eventos, aplicacoes }: AnimalTimelineProps) {
                 <span className="text-xs text-muted-foreground tabular-nums">
                   {format(item.data, "dd/MM/yyyy", { locale: ptBR })}
                 </span>
+                {item.kind === "evento" && onDeleteEvento && (
+                  <button
+                    onClick={() => onDeleteEvento(item.id)}
+                    className="text-xs text-red-400 hover:text-red-600 px-1 rounded hover:bg-red-50 transition-colors"
+                    title="Remover evento"
+                  >
+                    ✕
+                  </button>
+                )}
                 {item.kind === "evento" && item.resultado && (
                   <Badge
                     className={`text-xs ${item.resultado === "POSITIVO" ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200"}`}
