@@ -173,7 +173,7 @@ export default function LotesPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight">Lotes</h1>
         <Button size="sm" onClick={openCreate}>+ Novo Lote</Button>
