@@ -17,6 +17,7 @@ function load(): Set<string> {
 interface DismissedAlertsContextValue {
   dismissed: Set<string>
   dismiss(id: string): void
+  restore(id: string): void
   clearDismissed(): void
 }
 
@@ -34,13 +35,22 @@ export function DismissedAlertsProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  const restore = useCallback((id: string) => {
+    setDismissed(prev => {
+      const next = new Set(prev)
+      next.delete(id)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]))
+      return next
+    })
+  }, [])
+
   const clearDismissed = useCallback(() => {
     setDismissed(new Set())
     localStorage.removeItem(STORAGE_KEY)
   }, [])
 
   return (
-    <DismissedAlertsContext.Provider value={{ dismissed, dismiss, clearDismissed }}>
+    <DismissedAlertsContext.Provider value={{ dismissed, dismiss, restore, clearDismissed }}>
       {children}
     </DismissedAlertsContext.Provider>
   )

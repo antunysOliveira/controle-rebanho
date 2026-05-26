@@ -28,7 +28,7 @@ const urgenciaLeft: Record<AlertaUrgencia, string> = {
 
 export default function AlertasPage() {
   const { animais, bezerros, medicamentos, eventosReprodutivos, loading } = useData()
-  const { dismissed, dismiss, clearDismissed } = useDismissedAlerts()
+  const { dismissed, dismiss, restore, clearDismissed } = useDismissedAlerts()
 
   if (loading) return <div className="p-4 md:p-6 text-sm text-muted-foreground">Carregando...</div>
 
@@ -40,33 +40,23 @@ export default function AlertasPage() {
     eventos:      eventosReprodutivos as Parameters<typeof computeAlertas>[0]["eventos"],
   })
 
-  const visible     = alertas.filter(a => !dismissed.has(a.id))
-  const hiddenCount = alertas.length - visible.length
+  const visible   = alertas.filter(a => !dismissed.has(a.id))
+  const hidden    = alertas.filter(a => dismissed.has(a.id))
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Alertas</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {visible.length} alerta{visible.length !== 1 ? "s" : ""} ativo{visible.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        {hiddenCount > 0 && (
-          <button
-            onClick={clearDismissed}
-            className="text-xs text-muted-foreground hover:text-foreground underline"
-          >
-            Mostrar {hiddenCount} dispensado{hiddenCount !== 1 ? "s" : ""}
-          </button>
-        )}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Alertas</h1>
+        <p className="text-muted-foreground text-sm mt-1">
+          {visible.length} alerta{visible.length !== 1 ? "s" : ""} ativo{visible.length !== 1 ? "s" : ""}
+        </p>
       </div>
 
       {visible.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground text-sm">
-            {hiddenCount > 0
-              ? `Nenhum alerta visível — ${hiddenCount} dispensado${hiddenCount !== 1 ? "s" : ""}.`
+            {hidden.length > 0
+              ? `Nenhum alerta visível — ${hidden.length} dispensado${hidden.length !== 1 ? "s" : ""}.`
               : "Nenhum alerta ativo no momento."}
           </CardContent>
         </Card>
@@ -95,6 +85,43 @@ export default function AlertasPage() {
                 title="Dispensar alerta"
               >
                 ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {hidden.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-muted-foreground">
+              Dispensados ({hidden.length})
+            </p>
+            <button
+              onClick={clearDismissed}
+              className="text-xs text-red-500 hover:text-red-700 underline"
+            >
+              Limpar todos
+            </button>
+          </div>
+          {hidden.map((alerta) => (
+            <div
+              key={alerta.id}
+              className="rounded-lg border bg-muted/40 px-4 py-3 flex items-center gap-3 opacity-60"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm line-through text-muted-foreground">{alerta.titulo}</span>
+                  <Badge className={`text-xs ${tipoBadge[alerta.tipo]}`} variant="outline">
+                    {tipoLabel[alerta.tipo]}
+                  </Badge>
+                </div>
+              </div>
+              <button
+                onClick={() => restore(alerta.id)}
+                className="shrink-0 text-xs text-green-600 hover:text-green-700 font-medium px-2 py-1 rounded hover:bg-green-50 transition-colors"
+              >
+                Restaurar
               </button>
             </div>
           ))}
