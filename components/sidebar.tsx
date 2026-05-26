@@ -5,12 +5,14 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useData } from "@/components/data-provider"
+import { useDismissedAlerts } from "@/components/dismissed-alerts-provider"
 import { computeAlertas } from "@/lib/alerts"
 import { navItems } from "@/lib/nav-items"
 
 export function Sidebar() {
   const pathname = usePathname()
   const { animais, bezerros, medicamentos, eventosReprodutivos } = useData()
+  const { dismissed } = useDismissedAlerts()
 
   const alertCount = useMemo(() => computeAlertas({
     today:        new Date(),
@@ -18,7 +20,7 @@ export function Sidebar() {
     bezerros:     bezerros.filter(b => b.dataDesmameEstimada !== null) as Parameters<typeof computeAlertas>[0]["bezerros"],
     medicamentos: medicamentos as Parameters<typeof computeAlertas>[0]["medicamentos"],
     eventos:      eventosReprodutivos as Parameters<typeof computeAlertas>[0]["eventos"],
-  }).length, [animais, bezerros, medicamentos, eventosReprodutivos])
+  }).filter(a => !dismissed.has(a.id)).length, [animais, bezerros, medicamentos, eventosReprodutivos, dismissed])
 
   return (
     <aside

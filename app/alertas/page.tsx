@@ -1,13 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import { useData } from "@/components/data-provider"
+import { useDismissedAlerts } from "@/components/dismissed-alerts-provider"
 import { computeAlertas } from "@/lib/alerts"
 import type { AlertaTipo, AlertaUrgencia } from "@/lib/alerts"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-
-const STORAGE_KEY = "alertas-dismissed"
 
 const tipoLabel: Record<AlertaTipo, string> = {
   parto: "Parto", desmame: "Desmame", estoque: "Estoque",
@@ -28,19 +26,9 @@ const urgenciaLeft: Record<AlertaUrgencia, string> = {
   baixa: "border-l-gray-300",
 }
 
-function loadDismissed(): Set<string> {
-  if (typeof window === "undefined") return new Set()
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? new Set(JSON.parse(raw)) : new Set()
-  } catch {
-    return new Set()
-  }
-}
-
 export default function AlertasPage() {
   const { animais, bezerros, medicamentos, eventosReprodutivos, loading } = useData()
-  const [dismissed, setDismissed] = useState<Set<string>>(loadDismissed)
+  const { dismissed, dismiss, clearDismissed } = useDismissedAlerts()
 
   if (loading) return <div className="p-4 md:p-6 text-sm text-muted-foreground">Carregando...</div>
 
@@ -52,22 +40,8 @@ export default function AlertasPage() {
     eventos:      eventosReprodutivos as Parameters<typeof computeAlertas>[0]["eventos"],
   })
 
-  const visible    = alertas.filter(a => !dismissed.has(a.id))
+  const visible     = alertas.filter(a => !dismissed.has(a.id))
   const hiddenCount = alertas.length - visible.length
-
-  function dismiss(id: string) {
-    setDismissed(prev => {
-      const next = new Set(prev)
-      next.add(id)
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]))
-      return next
-    })
-  }
-
-  function clearDismissed() {
-    setDismissed(new Set())
-    localStorage.removeItem(STORAGE_KEY)
-  }
 
   return (
     <div className="p-4 md:p-6 space-y-6">
