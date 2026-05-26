@@ -1,10 +1,13 @@
 "use client"
 
+import { useState } from "react"
 import { useData } from "@/components/data-provider"
 import { computeAlertas } from "@/lib/alerts"
 import type { AlertaTipo, AlertaUrgencia } from "@/lib/alerts"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+
+const STORAGE_KEY = "alertas-dismissed"
 
 const tipoLabel: Record<AlertaTipo, string> = {
   parto: "Parto", desmame: "Desmame", estoque: "Estoque",
@@ -25,8 +28,19 @@ const urgenciaLeft: Record<AlertaUrgencia, string> = {
   baixa: "border-l-gray-300",
 }
 
+function loadDismissed(): Set<string> {
+  if (typeof window === "undefined") return new Set()
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? new Set(JSON.parse(raw)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
 export default function AlertasPage() {
   const { animais, bezerros, medicamentos, eventosReprodutivos, loading } = useData()
+  const [dismissed, setDismissed] = useState<Set<string>>(loadDismissed)
 
   if (loading) return <div className="p-4 md:p-6 text-sm text-muted-foreground">Carregando...</div>
 
@@ -38,24 +52,53 @@ export default function AlertasPage() {
     eventos:      eventosReprodutivos as Parameters<typeof computeAlertas>[0]["eventos"],
   })
 
+  const visible    = alertas.filter(a => !dismissed.has(a.id))
+  const hiddenCount = alertas.length - visible.length
+
+  function dismiss(id: string) {
+    setDismissed(prev => {
+      const next = new Set(prev)
+      next.add(id)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]))
+      return next
+    })
+  }
+
+  function clearDismissed() {
+    setDismissed(new Set())
+    localStorage.removeItem(STORAGE_KEY)
+  }
+
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Alertas</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {alertas.length} alerta{alertas.length !== 1 ? "s" : ""} ativo{alertas.length !== 1 ? "s" : ""}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Alertas</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {visible.length} alerta{visible.length !== 1 ? "s" : ""} ativo{visible.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+        {hiddenCount > 0 && (
+          <button
+            onClick={clearDismissed}
+            className="text-xs text-muted-foreground hover:text-foreground underline"
+          >
+            Mostrar {hiddenCount} dispensado{hiddenCount !== 1 ? "s" : ""}
+          </button>
+        )}
       </div>
 
-      {alertas.length === 0 ? (
+      {visible.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground text-sm">
-            Nenhum alerta ativo no momento.
+            {hiddenCount > 0
+              ? `Nenhum alerta visível — ${hiddenCount} dispensado${hiddenCount !== 1 ? "s" : ""}.`
+              : "Nenhum alerta ativo no momento."}
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-2">
-          {alertas.map((alerta) => (
+          {visible.map((alerta) => (
             <div
               key={alerta.id}
               className={`rounded-lg border border-l-4 bg-card px-4 py-3 flex items-start gap-3 ${urgenciaLeft[alerta.urgencia]}`}
@@ -72,6 +115,13 @@ export default function AlertasPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">{alerta.descricao}</p>
               </div>
+              <button
+                onClick={() => dismiss(alerta.id)}
+                className="shrink-0 text-muted-foreground hover:text-foreground text-base leading-none px-1 rounded hover:bg-muted transition-colors"
+                title="Dispensar alerta"
+              >
+                ✕
+              </button>
             </div>
           ))}
         </div>
